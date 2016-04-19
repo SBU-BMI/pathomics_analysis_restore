@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 2.4)
+cmake_minimum_required(VERSION 2.8)
 if(COMMAND cmake_policy)
     cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-set(projName "imageAnalysis")
+set(projName "pathomicsAnalysis")
 project(${projName})
 
 
@@ -43,6 +43,8 @@ set(Libraries
     ${Libraries}
 )
 
+include_directories(${PROJECT_SOURCE_DIR}/include/)
+
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
@@ -57,6 +59,7 @@ endif(HAVE_GLIB)
 
 
 option(build_mainTileAndSegmentWSINucleiOutputFeature "build mainTileAndSegmentWSINucleiOutputFeature?" ON)
+
 ################################################################################
 # find OpenSlide path
 if(build_mainTileAndSegmentWSINucleiOutputFeature)
@@ -83,59 +86,18 @@ set(Libraries
 
 ################################################################################
 # build local libraries
-add_library(localLibraries 
-  MultipleObjectFeatureAnalysisFilter.cxx
-  SingleObjectFeatureAnalysisFilter.cxx
-  BinaryMaskAnalysisFilter.cxx
-  InputParameters.cxx
-  Normalization.cpp
-  PixelOperations.cpp
-  Logger.cpp)
+add_library(localLibraries
+    lib/MultipleObjectFeatureAnalysisFilter.cxx
+    lib/SingleObjectFeatureAnalysisFilter.cxx
+    lib/BinaryMaskAnalysisFilter.cxx
+    lib/InputParameters.cxx
+    lib/Normalization.cpp
+    lib/PixelOperations.cpp
+    lib/Logger.cpp)
 
 set(Libraries
     localLibraries
     ${Libraries}
 )
 
-option(build_mainSegmentSmallImage "build mainSegmentSmallImage?" ON)
-if (build_mainSegmentSmallImage)
-    set(cexx mainSegmentSmallImage)
-    add_executable(${cexx} ${cexx}.cxx)
-    target_link_libraries(${cexx} ${Libraries} )
-endif (build_mainSegmentSmallImage)
-
-# option(build_mainTileAndSegmentWSINuclei "build mainTileAndSegmentWSINuclei?" ON)
-# if (build_mainTileAndSegmentWSINuclei)
-#     set(cexx mainTileAndSegmentWSINuclei)
-#     add_executable(${cexx} ${cexx}.cxx)
-#     target_link_libraries(${cexx} ${Libraries})
-# endif (build_mainTileAndSegmentWSINuclei)
-
-option(build_mainTileAndSegmentWSINucleiOutputFeature "build mainTileAndSegmentWSINucleiOutputFeature?" ON)
-if (build_mainTileAndSegmentWSINucleiOutputFeature)
-    set(cexx mainTileAndSegmentWSINucleiOutputFeature)
-    add_executable(${cexx} ${cexx}.cxx)
-    target_link_libraries(${cexx} ${Libraries} )
-endif (build_mainTileAndSegmentWSINucleiOutputFeature)
-
-option(build_mainComputeShapeFeatures "build mainComputeShapeFeatures?" ON)
-if (build_mainComputeShapeFeatures)
-    set(cexx mainComputeShapeFeatures)
-    add_executable(${cexx} ${cexx}.cxx)
-    target_link_libraries(${cexx} ${Libraries} )
-endif (build_mainComputeShapeFeatures)
-
-option(build_mainComputeTileFeatures "build mainComputeTileFeatures?" ON)
-if (build_mainComputeTileFeatures)
-    set(cexx mainComputeTileFeatures)
-    add_executable(${cexx} ${cexx}.cxx)
-    target_link_libraries(${cexx} ${Libraries} )
-endif (build_mainComputeTileFeatures)
-
-option(build_mainSegmentFeatures "build mainSegmentFeatures?" ON)
-if (build_mainSegmentFeatures)
-    set(cexx mainSegmentFeatures)
-    add_executable(${cexx} ${cexx}.cxx)
-    target_link_libraries(${cexx} ${Libraries} )
-endif (build_mainSegmentFeatures)
-
+add_subdirectory(app)

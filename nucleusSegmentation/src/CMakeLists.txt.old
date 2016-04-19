@@ -1,0 +1,102 @@
+cmake_minimum_required(VERSION 2.4)
+if(COMMAND cmake_policy)
+    cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
+set(projName "imageAnalysis")
+project(${projName})
+
+
+set(CMAKE_C_FLAGS "-std=c99")
+
+
+
+################################################################################
+# ITK, Should be with ItkVtkGlue
+find_package (ITK)
+if (ITK_FOUND)
+   include(${ITK_USE_FILE})
+endif(ITK_FOUND)
+
+
+################################################################################
+# put all libs together
+set(Libraries
+    ${ITK_LIBRARIES}
+    ${Libraries}
+)
+
+
+################################################################################
+# openCV
+find_package( OpenCV REQUIRED )
+include_directories(${OpenCV_INCLUDE_DIRS})
+set(Libraries
+    ${OpenCV_LIBS}
+    ${Libraries}
+)
+
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+
+find_package (GLIB)
+if (HAVE_GLIB)
+include_directories(${GLIB_INCLUDES})
+set(Libraries
+    ${GLIB_LIBRARIES}
+    ${Libraries}
+)
+endif(HAVE_GLIB)
+
+
+################################################################################
+# find OpenSlide path
+find_path(OpenSlide_INSTALLATION_PATH include/openslide/openslide.h REQUIRED)
+if(NOT OpenSlide_INSTALLATION_PATH)
+   message(FATAL_ERROR "Please enter the installation path of OpenSlide, i.e., the one after --prefix= when configuring OpenSlide")
+endif(NOT OpenSlide_INSTALLATION_PATH)
+
+include_directories(${OpenSlide_INSTALLATION_PATH}/include/openslide/)
+
+set(OpenSlideLibs
+  ${OpenSlide_INSTALLATION_PATH}/lib/libopenslide.so
+  )
+
+
+################################################################################
+# put all libs together
+set(Libraries
+    ${OpenSlideLibs}
+    ${Libraries}
+)
+
+
+################################################################################
+# build local libraries
+add_library(localLibraries
+    BinaryMaskAnalysisFilter.cxx
+    Normalization.cpp
+    PixelOperations.cpp
+    Logger.cpp)
+
+set(Libraries
+    localLibraries
+    ${Libraries}
+)
+
+
+
+option(build_mainTileAndSegmentWSINucleiV1a "build mainTileAndSegmentWSINucleiV1a?" ON)
+if (build_mainTileAndSegmentWSINucleiV1a)
+    set(cexx mainTileAndSegmentWSINucleiV1a)
+    add_executable(${cexx} ${cexx}.cxx)
+    target_link_libraries(${cexx} ${Libraries})
+endif (build_mainTileAndSegmentWSINucleiV1a)
+
+
+option(build_mainSegmentSmallImage "build mainSegmentSmallImage?" ON)
+if (build_mainSegmentSmallImage)
+    set(cexx mainSegmentSmallImage)
+    add_executable(${cexx} ${cexx}.cxx)
+    target_link_libraries(${cexx} ${Libraries})
+endif (build_mainSegmentSmallImage)

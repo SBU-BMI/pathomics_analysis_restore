@@ -36,6 +36,8 @@ typedef struct _InputParameters {
 	std::string outPrefix;
 	std::string analysisId;
 	std::string analysisDesc;
+	std::string subjectId;
+	std::string caseId;
 
 	// compress the output files into a zip package
 	std::string zipFile;

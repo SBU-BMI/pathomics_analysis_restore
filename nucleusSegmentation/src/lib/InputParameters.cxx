@@ -13,9 +13,9 @@
 void printParseError(char *argv[]) 
 {
 	std::cerr 	<< "Usage: " << argv[0] << " [parameters]" << std::endl;
-	std::cerr	<< "   -t [wsi|tiles|onetile|img] " << std::endl
+	std::cerr	<< "   -t [onetile|tiles] " << std::endl
 				<< "   -i <input file>" << std::endl
-				<< "   -p <output file/prefix>" << std::endl
+				<< "   -o <output folder>" << std::endl
 				<< "   -m <mpp>" << std::endl
 				<< "   -r <otsuRatio> " << std::endl
 				<< "   -w <curvatureWeight>" << std::endl
@@ -26,8 +26,10 @@ void printParseError(char *argv[])
 				<< "   -s <topLeftX,topLeftY>" << std::endl
 				<< "   -b <sizeX,sizeY>" << std::endl
 				<< "   -a <analysisId: string>" << std::endl
+				<< "   -c <caseId: string>" << std::endl
+				<< "   -p <subjectId: string>" << std::endl
 				<< "   -e <analysis desc: string>" << std::endl
-				<< "   -d <tileSizeX,tileSizeY>" << std::endl
+				<< "   -d <patchSizeX,patchSizeY>" << std::endl
 				<< "   -z <zipFile - compression works with onetile only.>" << std::endl
 				<< "   -v <output level: mask|mask:img|mask:img:overlay>" << std::endl;
 }
@@ -46,6 +48,8 @@ void printInputParameters(InputParameters *inpParams)
 	std::cout << "mpp: " << inpParams->mpp << std::endl;
 	std::cout << "tileSizeX: " << inpParams->tileSizeX << " tileSizeY: " << inpParams->tileSizeY << std::endl;	
 	std::cout << "inpFile: " << inpParams->inpFile << std::endl;
+	std::cout << "subjectId: " << inpParams->subjectId << std::endl;
+	std::cout << "caseId: " << inpParams->caseId << std::endl;
 	std::cout << "outPrefix: " << inpParams->outPrefix << std::endl;
 	std::cout << "outputLevel: " << inpParams->outputLevel << std::endl;
 	if (inpParams->isZipped) std::cout << "zipFile: " << inpParams->zipFile;
@@ -74,8 +78,11 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 	inpParams->outputLevel = MASK_ONLY;
 	inpParams->isZipped = 0; // no compressed zip output
 
+	inpParams->subjectId = "";
+	inpParams->caseId = "";
+
 	opterr = 0;
-	while ((c = getopt (argc, argv, "ht:i:p:m:r:w:l:u:k:n:s:b:d:v:a:e:z:")) != -1) {
+	while ((c = getopt (argc, argv, "ht:i:o:m:r:w:l:u:k:n:s:b:d:v:a:e:c:p:z:")) != -1) {
 		switch (c)
 		{
 			case 'h': 
@@ -98,12 +105,18 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 			case 'i':
 				inpParams->inpFile = optarg;
 				break;
-			case 'p':
+			case 'o':
 				inpParams->outPrefix = optarg;
 				break;
 			case 'z':
 				inpParams->isZipped = 1;
 				inpParams->zipFile = optarg;
+				break;
+			case 'c':
+				inpParams->caseId = optarg;
+				break;
+			case 'p':
+				inpParams->subjectId = optarg;
 				break;
 			case 'a':
 				inpParams->analysisId = optarg;
@@ -172,13 +185,13 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 				if (std::getline(ss, token, ',')) {
 					inpParams->tileSizeX = atoi(token.c_str());
 				} else {
-					fprintf(stderr,"ERROR: Option -d is missing <tileSizeX,tileSizeY> value.\n");
+					fprintf(stderr,"ERROR: Option -d is missing <patchSizeX,patchSizeY> value.\n");
 					return 1;
 				}
 				if (std::getline(ss, token, ',')) {
 					inpParams->tileSizeY = atoi(token.c_str());
 				} else {
-					fprintf(stderr,"ERROR: Option -d is missing <tileSizeX,tileSizeY> value.\n");
+					fprintf(stderr,"ERROR: Option -d is missing <patchSizeX,patchSizeY> value.\n");
 					return 1;
 				}
 				break;
@@ -210,6 +223,11 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 			default:
 				return 1;	
 		}
+	}
+
+	if (inpParams->subjectId.compare("")==0 || inpParams->caseId.compare("")==0) {
+		fprintf(stderr, "Missing subject id and/or case id.");
+		return 1;
 	}
 
 	if (inpParams->tileSizeX==0 || inpParams->tileSizeY==0) {

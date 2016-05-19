@@ -106,7 +106,9 @@ int writeAnalysisParametersJSON(AnalysisParameters *analysisParams)
 						<< "\"mpp\" : " << analysisParams->mpp << ", "
 						<< "\"tileSizeX\" : " << analysisParams->tileSizeX << ", "
 						<< "\"tileSizeY\" : " << analysisParams->tileSizeY << ", "
-						<< "\"outPrefix\" : \"" << analysisParams->outPrefix << "\", "
+						<< "\"outFolder\" : \"" << analysisParams->outPrefix << "\", "
+						<< "\"subjectId\" : \"" << analysisParams->subjectId << "\", "
+						<< "\"caseId\" : \"" << analysisParams->caseId << "\", "
 						<< "\"outputLevel\" : \"" << analysisParams->outputLevel << "\", "
 						<< "\"analysisId\" : \"" << analysisParams->analysisId << "\", "
 						<< "\"analysisDesc\" : \"" << analysisParams->analysisDesc << "\""
@@ -136,6 +138,8 @@ int captureAnalysisParameters(AnalysisParameters *analysisParams, InputParameter
 	analysisParams->outPrefix = inpParams->outPrefix;
 	analysisParams->analysisId = inpParams->analysisId;
 	analysisParams->analysisDesc = inpParams->analysisDesc;
+	analysisParams->subjectId = inpParams->subjectId;
+	analysisParams->caseId = inpParams->caseId;
 	return 0;
 }
 
@@ -195,7 +199,10 @@ int segmentWSI(InputParameters *inpParams)
 	openslide_t *osr = openslide_open(inpParams->inpFile.c_str());
 	if (osr==NULL) return 1;
 
-	inpParams->outPrefix = inpParams->outPrefix + "." + getRandomIDString(); // generateUUIDString(); 
+	inpParams->outPrefix = inpParams->outPrefix + "/" 
+							+ inpParams->subjectId + "." 
+							+ inpParams->caseId + "." 
+							+ getRandomIDString(); // generateUUIDString(); 
 
 	AnalysisParameters analysisParams;
 	captureAnalysisParameters(&analysisParams,inpParams);
@@ -295,7 +302,10 @@ int segmentImg(InputParameters *inpParams)
 {
 	const int ImageDimension = 2;
 
-	inpParams->outPrefix = inpParams->outPrefix + "." + getRandomIDString(); // generateUUIDString(); 
+	inpParams->outPrefix = inpParams->outPrefix + "/" 
+							+ inpParams->subjectId + "." 
+							+ inpParams->caseId + "." 
+							+ getRandomIDString(); // generateUUIDString(); 
 
 	AnalysisParameters analysisParams;
 	captureAnalysisParameters(&analysisParams,inpParams);
@@ -386,7 +396,10 @@ size_t generateTileList(InputParameters *inpParams, TileList& tileList)
 			tileList.topLeftY.push_back(j);
 			tileList.sizeX.push_back(sizeExtX);
 			tileList.sizeY.push_back(sizeExtY);
-			outPrefix = inpParams->outPrefix + "." + getRandomIDString(); // generateUUIDString(); 
+			outPrefix = inpParams->outPrefix + "/" 
+							+ inpParams->subjectId + "." 
+							+ inpParams->caseId + "." 
+							+ getRandomIDString(); // generateUUIDString(); 
 			tileList.outPrefixes.push_back(outPrefix);
 			tileList.inpFiles.push_back(inpParams->inpFile);
 		}
@@ -415,9 +428,23 @@ std::size_t readTileList(InputParameters *inpParams, std::vector<TileList>& tile
 			return 0;
 		}
 
-		// Output file prefix	
+		// subjectId
+		if (!(std::getline(ss, tmpParams.subjectId, ','))) {
+			std::cerr << "Error readling the tile list file: Missing subjectId column at line: " 
+					<< lineNum << std::endl;
+			return 0;
+		}
+
+		// caseId
+		if (!(std::getline(ss, tmpParams.caseId, ','))) {
+			std::cerr << "Error readling the tile list file: Missing caseId column at line: " 
+					<< lineNum << std::endl;
+			return 0;
+		}
+
+		// Output folder	
 		if (!(std::getline(ss, tmpParams.outPrefix, ','))) {
-			std::cerr << "Error readling the tile list file: Missing output prefix column at line: " 
+			std::cerr << "Error readling the tile list file: Missing output folder column at line: " 
 					<< lineNum << std::endl;
 			return 0;
 		}
@@ -472,7 +499,7 @@ std::size_t readTileList(InputParameters *inpParams, std::vector<TileList>& tile
 int compressTiles(InputParameters *inpParams)
 {
 	if (inpParams->isZipped==0) return 1;
-	std::string cmd = "zip -ujr " + inpParams->zipFile + " " + inpParams->outPrefix + "* -x \\*.svs"; 
+	std::string cmd = "zip -ujr " + inpParams->zipFile + " " + inpParams->outPrefix + "/" + "* -x \\*.svs"; 
 	system(cmd.c_str());
 	return 0;
 }

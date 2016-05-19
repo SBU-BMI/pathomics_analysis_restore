@@ -14,7 +14,8 @@
 #define TILES   1
 #define ONETILE 2
 #define IMG     3
-#define DEFAULT_TILE_SIZE 4096
+#define DEFAULT_WSI_TILE   4096
+#define DEFAULT_SMALL_TILE 512 
 #define MASK_ONLY        1 
 #define MASK_IMG         2 
 #define MASK_IMG_OVERLAY 3 
@@ -29,12 +30,17 @@ typedef struct _InputParameters {
 	int64_t 	topLeftX, topLeftY;
 	int64_t		sizeX, sizeY;
 	float       mpp;
-	int64_t     tileSize;	
+	int64_t     tileSizeX,tileSizeY;	
 	int         outputLevel;
 	std::string inpFile;
 	std::string outPrefix;
 	std::string analysisId;
 	std::string analysisDesc;
+
+	// compress the output files into a zip package
+	std::string zipFile;
+	int isZipped;
+	
 } InputParameters;	
 
 void printParseError(char *argv[]); 

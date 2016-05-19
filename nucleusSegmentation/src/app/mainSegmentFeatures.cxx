@@ -10,6 +10,11 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>       /* time */
+
+#ifdef ADD_UUID
+#include <uuid/uuid.h>
+#endif
 
 //itk
 #include "itkImage.h"
@@ -65,6 +70,16 @@ const std::string _featureNames[] = {
 		"Polygon"
 };
 
+typedef struct _TileList {
+	std::size_t tileCount;
+	std::vector<string>  inpFiles;
+	std::vector<string>  outPrefixes;
+	std::vector<int64_t> topLeftX; 
+	std::vector<int64_t> topLeftY;
+	std::vector<int64_t> sizeX; 
+	std::vector<int64_t> sizeY;
+} TileList;
+
 typedef InputParameters AnalysisParameters;
 int writeAnalysisParametersJSON(AnalysisParameters *analysisParams)  
 {
@@ -89,7 +104,8 @@ int writeAnalysisParametersJSON(AnalysisParameters *analysisParams)
 						<< "\"sizeX\" :  " << analysisParams->sizeX << ", "
 						<< "\"sizeY\" : " << analysisParams->sizeY << ", "
 						<< "\"mpp\" : " << analysisParams->mpp << ", "
-						<< "\"tileSize\" : " << analysisParams->tileSize << ", "
+						<< "\"tileSizeX\" : " << analysisParams->tileSizeX << ", "
+						<< "\"tileSizeY\" : " << analysisParams->tileSizeY << ", "
 						<< "\"outPrefix\" : \"" << analysisParams->outPrefix << "\", "
 						<< "\"outputLevel\" : \"" << analysisParams->outputLevel << "\", "
 						<< "\"analysisId\" : \"" << analysisParams->analysisId << "\", "
@@ -113,7 +129,8 @@ int captureAnalysisParameters(AnalysisParameters *analysisParams, InputParameter
 	analysisParams->sizeX = inpParams->sizeX;
 	analysisParams->sizeY = inpParams->sizeY;
 	analysisParams->mpp = inpParams->mpp;
-	analysisParams->tileSize = inpParams->tileSize;	
+	analysisParams->tileSizeX = inpParams->tileSizeX;	
+	analysisParams->tileSizeY = inpParams->tileSizeY;	
 	analysisParams->outputLevel = inpParams->outputLevel;
 	analysisParams->inpFile = inpParams->inpFile;
 	analysisParams->outPrefix = inpParams->outPrefix;
@@ -122,6 +139,7 @@ int captureAnalysisParameters(AnalysisParameters *analysisParams, InputParameter
 	return 0;
 }
 
+#define SKIP_BBOX 4 // do not output the bounding box info -- it is computed while loading to the database
 int writeFeatureCSV(std::string outPrefix, float mpp, int64_t topLeftX, int64_t topLeftY, std::vector< std::vector<FeatureValueType> > &features)
 {
 	std::ostringstream oss;
@@ -132,22 +150,52 @@ int writeFeatureCSV(std::string outPrefix, float mpp, int64_t topLeftX, int64_t 
 		<< "-features.csv";
 	std::ofstream outputFeatureFile(oss.str().c_str());
 	int i;
-	for (i=0;i<_numOfFeatures-1;i++) 
+	for (i=SKIP_BBOX;i<_numOfFeatures-1;i++) 
 		outputFeatureFile<<_featureNames[i]<<",";
 	outputFeatureFile<<_featureNames[i]<<std::endl;
 
-	for (std::size_t iObject = 0; iObject < features.size(); ++iObject) {
-		for (std::size_t iFeature = 0; iFeature < features[iObject].size(); ++iFeature)
+	std::size_t iObject, iFeature;
+	for (iObject = 0; iObject < features.size(); ++iObject) {
+		for (iFeature = SKIP_BBOX; iFeature <_numOfFeatures-1; ++iFeature) 
 			outputFeatureFile<<features[iObject][iFeature]<<",";
-		outputFeatureFile<<std::endl<<std::flush;
+		outputFeatureFile<<"[";
+		for (;iFeature<features[iObject].size()-1; ++iFeature) {
+			outputFeatureFile<<features[iObject][iFeature]<<":";
+		}
+		outputFeatureFile<<features[iObject][iFeature]<<"]"<<std::endl<<std::flush;
 	}
 	outputFeatureFile.close();
+}
+
+#ifdef ADD_UUID
+inline std::string generateUUIDString()
+{
+	uuid_t outId;
+	char uuidStr[64];
+	uuid_generate(outId);
+	uuid_unparse(outId,uuidStr);
+	return uuidStr;
+}
+#endif
+
+inline void initRandom()
+{
+	srand(time(NULL));
+}
+
+inline std::string getRandomIDString()
+{
+	std::stringstream ss;
+	ss << rand();
+	return ss.str();
 }
 
 int segmentWSI(InputParameters *inpParams)
 {
 	openslide_t *osr = openslide_open(inpParams->inpFile.c_str());
 	if (osr==NULL) return 1;
+
+	inpParams->outPrefix = inpParams->outPrefix + "." + getRandomIDString(); // generateUUIDString(); 
 
 	AnalysisParameters analysisParams;
 	captureAnalysisParameters(&analysisParams,inpParams);
@@ -172,7 +220,12 @@ int segmentWSI(InputParameters *inpParams)
 	std::vector<int64_t> tileSizeX;
 	std::vector<int64_t> tileSizeY;
 
-	ImagenomicAnalytics::WholeSlideProcessing::generateTileRegions<char>(largestW, largestH, inpParams->tileSize, 
+	if (inpParams->tileSizeX<0) {
+		inpParams->tileSizeX = DEFAULT_WSI_TILE;
+		inpParams->tileSizeY = DEFAULT_WSI_TILE;
+	}
+
+	ImagenomicAnalytics::WholeSlideProcessing::generateTileRegions<char>(largestW, largestH, inpParams->tileSizeX, 
 													tileTopleftX, tileTopleftY, tileSizeX, tileSizeY);
 	std::size_t numberOfTiles = tileSizeY.size();
 
@@ -242,6 +295,8 @@ int segmentImg(InputParameters *inpParams)
 {
 	const int ImageDimension = 2;
 
+	inpParams->outPrefix = inpParams->outPrefix + "." + getRandomIDString(); // generateUUIDString(); 
+
 	AnalysisParameters analysisParams;
 	captureAnalysisParameters(&analysisParams,inpParams);
 
@@ -288,62 +343,151 @@ int segmentImg(InputParameters *inpParams)
 	return 0;
 }
 
-std::size_t readTileList(InputParameters *inpParams, std::vector<string>& inpFiles, std::vector<string>& outPrefixes, 
-				std::vector<int64_t>& topLeftX, std::vector<int64_t>& topLeftY, 
-				std::vector<int64_t>& sizeX, std::vector<int64_t>& sizeY)
+void resetTileList(TileList& tileList)
+{
+ 	tileList.topLeftX.clear();
+    tileList.topLeftY.clear();
+    tileList.sizeX.clear();
+    tileList.sizeY.clear();
+	tileList.outPrefixes.clear();
+	tileList.inpFiles.clear();
+	tileList.tileCount = 0;
+}
+
+size_t generateTileList(InputParameters *inpParams, TileList& tileList) 
+{
+	int64_t tileSizeX = inpParams->tileSizeX;
+	int64_t tileSizeY = inpParams->tileSizeY;
+	int64_t startX    = inpParams->topLeftX;
+	int64_t startY    = inpParams->topLeftY;
+	int64_t endX      = startX + inpParams->sizeX;
+	int64_t endY	  = startY + inpParams->sizeY;
+
+	if (inpParams->tileSizeX<0 || inpParams->tileSizeY<0) {
+		tileSizeX = inpParams->sizeX+1;
+		tileSizeY = inpParams->sizeY+1;
+	}
+
+	resetTileList(tileList);
+
+	int64_t sizeExtX, sizeExtY;
+	std::string outPrefix;
+	for (int64_t i=startX;i<endX;i+=tileSizeX) {
+		if ((i+tileSizeX)>endX) 
+			sizeExtX = (endX-i);
+		else
+			sizeExtX = tileSizeX;
+		for (int64_t j=startY;j<endY;j+=tileSizeY) {
+			if ((j+tileSizeY)>endY) 
+				sizeExtY = endY-j;
+			else
+				sizeExtY = tileSizeY;
+			tileList.topLeftX.push_back(i);
+			tileList.topLeftY.push_back(j);
+			tileList.sizeX.push_back(sizeExtX);
+			tileList.sizeY.push_back(sizeExtY);
+			outPrefix = inpParams->outPrefix + "." + getRandomIDString(); // generateUUIDString(); 
+			tileList.outPrefixes.push_back(outPrefix);
+			tileList.inpFiles.push_back(inpParams->inpFile);
+		}
+	}
+	tileList.tileCount = tileList.topLeftX.size();
+
+	return (std::size_t) tileList.tileCount;
+}
+
+std::size_t readTileList(InputParameters *inpParams, std::vector<TileList>& tileListArray)
 {
 	std::ifstream infile(inpParams->inpFile.c_str());
 
 	std::string line;
+	TileList tileList; 
+	InputParameters tmpParams;
+	int lineNum = 1;
 	while (std::getline(infile,line)) {
 		std::istringstream ss(line);
 		std::string token;
 
 		// Input image file
-		std::getline(ss, token, ',');
-		inpFiles.push_back(token);
+		if (!(std::getline(ss, tmpParams.inpFile, ','))) {
+			std::cerr << "Error reading the tile list file: Missing input file column at line: " 
+					<< lineNum << std::endl;
+			return 0;
+		}
 
 		// Output file prefix	
-		std::getline(ss, token, ',');
-		outPrefixes.push_back(token);
+		if (!(std::getline(ss, tmpParams.outPrefix, ','))) {
+			std::cerr << "Error readling the tile list file: Missing output prefix column at line: " 
+					<< lineNum << std::endl;
+			return 0;
+		}
 
 		// top left X,Y
-		std::getline(ss, token, ',');
-		topLeftX.push_back(atoi(token.c_str()));
-		std::getline(ss, token, ',');
-		topLeftY.push_back(atoi(token.c_str()));
+		if (!(std::getline(ss, token, ','))) {
+			std::cerr << "Error readling the tile list file: Missing top left X column at line: " 
+					<< lineNum << std::endl;
+			return 0;
+		}		
+		tmpParams.topLeftX = atoi(token.c_str());
+		if (!(std::getline(ss, token, ','))) {
+			std::cerr << "Error readling the tile list file: Missing top left Y column at line: " 
+					<< lineNum << std::endl;
+			return 0;
+		}
+		tmpParams.topLeftY = atoi(token.c_str());
 
 		// width and height
-		std::getline(ss, token, ',');
-		sizeX.push_back(atoi(token.c_str()));
-		std::getline(ss, token, ',');
-		sizeY.push_back(atoi(token.c_str()));
+		if (!(std::getline(ss, token, ','))) {
+			std::cerr << "Error readling the tile list file: Missing width (sizeX) column at line: " 
+					<< lineNum << std::endl;
+			return 0;
+		}
+		tmpParams.sizeX = atoi(token.c_str());
+		if (!(std::getline(ss, token, ','))) {
+			std::cerr << "Error readling the tile list file: Missing height (sizeY) column at line: " 
+					<< lineNum << std::endl;
+			return 0;
+		}
+		tmpParams.sizeY = atoi(token.c_str());
+
+		// tiling size 
+		if (!(std::getline(ss, token, ','))) {
+        	tmpParams.tileSizeX = DEFAULT_SMALL_TILE;
+		} else {
+        	tmpParams.tileSizeX = atoi(token.c_str());
+		}
+        if (!(std::getline(ss, token, ','))) {
+        	tmpParams.tileSizeY = DEFAULT_SMALL_TILE;
+		} else {
+        	tmpParams.tileSizeY = atoi(token.c_str());
+		}
+
+		generateTileList(&tmpParams,tileList);
+		tileListArray.push_back(tileList);
 	}
 
-	return (std::size_t) inpFiles.size();
+	return (std::size_t) tileListArray.size();
 }
 
-int segmentTiles(InputParameters *inpParams)
+int compressTiles(InputParameters *inpParams)
 {
-	std::vector<string>  inpFileArray; 
-	std::vector<string>  outPrefixArray; 
-	std::vector<int64_t> topLeftXArray;
-	std::vector<int64_t> topLeftYArray; 
-	std::vector<int64_t> sizeXArray;
-	std::vector<int64_t> sizeYArray;
-	std::size_t          tileCount;
+	if (inpParams->isZipped==0) return 1;
+	std::string cmd = "zip -ujr " + inpParams->zipFile + " " + inpParams->outPrefix + "* -x \\*.svs"; 
+	system(cmd.c_str());
+	return 0;
+}
 
-	tileCount = readTileList(inpParams,inpFileArray,outPrefixArray,
-			topLeftXArray,topLeftYArray,sizeXArray,sizeYArray);
+int segmentTiles(InputParameters *inpParams, TileList *tileList)
+{
 
 #pragma omp parallel for
-	for (std::size_t iTile=0;iTile<tileCount;iTile++) {
-		std::string fileName  = inpFileArray[iTile];
-		std::string outPrefix = outPrefixArray[iTile];
-		int64_t topLeftX      = topLeftXArray[iTile]; 
-		int64_t topLeftY      = topLeftYArray[iTile];
-		int64_t sizeX         = sizeXArray[iTile]; 
-		int64_t sizeY         = sizeYArray[iTile];
+	for (std::size_t iTile=0;iTile<tileList->tileCount;iTile++) {
+		std::string fileName  = tileList->inpFiles[iTile];
+		std::string outPrefix = tileList->outPrefixes[iTile];
+		int64_t topLeftX      = tileList->topLeftX[iTile]; 
+		int64_t topLeftY      = tileList->topLeftY[iTile];
+		int64_t sizeX         = tileList->sizeX[iTile]; 
+		int64_t sizeY         = tileList->sizeY[iTile];
 
 		AnalysisParameters analysisParams;
 		captureAnalysisParameters(&analysisParams,inpParams);
@@ -515,22 +659,31 @@ int main(int argc, char **argv)
 
 	if (parseInputParameters(argc,argv,&inpParams)!=0) {
 		printParseError(argv);
-		exit(-1);
+		return 1;
 	}
 	printInputParameters(&inpParams);
+
+	initRandom();
 
 	if (inpParams.inpType==WSI) {
 		segmentWSI(&inpParams);
 	} else if (inpParams.inpType==IMG) {
 		segmentImg(&inpParams);
 	} else if (inpParams.inpType==TILES) {
-		segmentTiles(&inpParams);
+		std::vector<TileList> tileListArray;
+		std::size_t tileArrayCount = readTileList(&inpParams,tileListArray); 
+		if (tileArrayCount==0) return 1;
+		for (int i=0;i<tileArrayCount;i++) 
+			segmentTiles(&inpParams,&tileListArray[i]);
 	} else if (inpParams.inpType==ONETILE) {
-		segmentSingleTile(&inpParams);
+		TileList tileList;
+		std::size_t tileCount = generateTileList(&inpParams,tileList);
+		segmentTiles(&inpParams,&tileList);
+		compressTiles(&inpParams);
 	} else {
 		std::cerr << "Unknown input type." << std::endl;
 		printParseError(argv);
-		exit(-1);
+		return 1;
 	}
 
 	return 0;

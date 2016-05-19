@@ -27,7 +27,8 @@ void printParseError(char *argv[])
 				<< "   -b <sizeX,sizeY>" << std::endl
 				<< "   -a <analysisId: string>" << std::endl
 				<< "   -e <analysis desc: string>" << std::endl
-				<< "   -d <tileSize>" << std::endl
+				<< "   -d <tileSizeX,tileSizeY>" << std::endl
+				<< "   -z <zipFile - compression works with onetile only.>" << std::endl
 				<< "   -v <output level: mask|mask:img|mask:img:overlay>" << std::endl;
 }
 
@@ -43,10 +44,11 @@ void printInputParameters(InputParameters *inpParams)
 	std::cout << "topLeftX: " << inpParams->topLeftX << " topLeftY: " <<  inpParams->topLeftY << std::endl;
 	std::cout << "sizeX:  " << inpParams->sizeX << " sizeY: " << inpParams->sizeY << std::endl;
 	std::cout << "mpp: " << inpParams->mpp << std::endl;
-	std::cout << "tileSize: " << inpParams->tileSize << std::endl;	
+	std::cout << "tileSizeX: " << inpParams->tileSizeX << " tileSizeY: " << inpParams->tileSizeY << std::endl;	
 	std::cout << "inpFile: " << inpParams->inpFile << std::endl;
 	std::cout << "outPrefix: " << inpParams->outPrefix << std::endl;
 	std::cout << "outputLevel: " << inpParams->outputLevel << std::endl;
+	if (inpParams->isZipped) std::cout << "zipFile: " << inpParams->zipFile;
 }
 
 int parseInputParameters(int argc, char **argv, InputParameters *inpParams) 
@@ -64,14 +66,16 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 	inpParams->levelsetNumberOfIteration = 100;
 	inpParams->topLeftX = 0;
 	inpParams->topLeftY = 0;
-	inpParams->sizeX = DEFAULT_TILE_SIZE;
-	inpParams->sizeY = DEFAULT_TILE_SIZE;
+	inpParams->sizeX = DEFAULT_SMALL_TILE;
+	inpParams->sizeY = DEFAULT_SMALL_TILE;
 	inpParams->mpp   = 0.25; // 40x objective
-	inpParams->tileSize = DEFAULT_TILE_SIZE;
+	inpParams->tileSizeX = 0;
+	inpParams->tileSizeY = 0;
 	inpParams->outputLevel = MASK_ONLY;
+	inpParams->isZipped = 0; // no compressed zip output
 
 	opterr = 0;
-	while ((c = getopt (argc, argv, "ht:i:p:m:r:w:l:u:k:n:s:b:d:v:a:e:")) != -1) {
+	while ((c = getopt (argc, argv, "ht:i:p:m:r:w:l:u:k:n:s:b:d:v:a:e:z:")) != -1) {
 		switch (c)
 		{
 			case 'h': 
@@ -96,6 +100,10 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 				break;
 			case 'p':
 				inpParams->outPrefix = optarg;
+				break;
+			case 'z':
+				inpParams->isZipped = 1;
+				inpParams->zipFile = optarg;
 				break;
 			case 'a':
 				inpParams->analysisId = optarg;
@@ -124,21 +132,75 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 			case 'n':
 				inpParams->levelsetNumberOfIteration = (int64_t) atoi(optarg);
 				break;
-			case 's':
-				sscanf(optarg,"%ld,%ld",&(inpParams->topLeftX),&(inpParams->topLeftY));
+			case 's': {
+				std::istringstream ss(optarg);
+				std::string token;
+				if (std::getline(ss, token, ',')) {
+					inpParams->topLeftX = atoi(token.c_str());
+				} else {
+					fprintf(stderr,"ERROR: Option -s is missing <leftX,leftY> value.\n");
+					return 1;
+				}
+				if (std::getline(ss, token, ',')) {
+					inpParams->topLeftY = atoi(token.c_str());
+				} else {
+					fprintf(stderr,"ERROR: Option -s is missing <leftX,leftY> value.\n");
+					return 1;
+				}
 				break;
-			case 'b':
-				sscanf(optarg,"%ld,%ld",&(inpParams->sizeX),&(inpParams->sizeY));
+			}
+			case 'b': {
+				std::istringstream ss(optarg);
+				std::string token;
+				if (std::getline(ss, token, ',')) {
+					inpParams->sizeX = atoi(token.c_str());
+				} else {
+					fprintf(stderr,"ERROR: Option -b is missing <sizeX,sizeY> value.\n");
+					return 1;
+				}
+				if (std::getline(ss, token, ',')) {
+					inpParams->sizeY = atoi(token.c_str());
+				} else {
+					fprintf(stderr,"ERROR: Option -b is missing <sizeX,sizeY> value.\n");
+					return 1;
+				}
 				break;
-			case 'd':
-				inpParams->tileSize = (int64_t) atoi(optarg);
+			}
+			case 'd': {
+				std::istringstream ss(optarg);
+				std::string token;
+				if (std::getline(ss, token, ',')) {
+					inpParams->tileSizeX = atoi(token.c_str());
+				} else {
+					fprintf(stderr,"ERROR: Option -d is missing <tileSizeX,tileSizeY> value.\n");
+					return 1;
+				}
+				if (std::getline(ss, token, ',')) {
+					inpParams->tileSizeY = atoi(token.c_str());
+				} else {
+					fprintf(stderr,"ERROR: Option -d is missing <tileSizeX,tileSizeY> value.\n");
+					return 1;
+				}
 				break;
+			}
 			case 'v':
 				if (!strcmp(optarg,"mask")) {
 					inpParams->outputLevel = MASK_ONLY;
 				} else if (!strcmp(optarg,"mask:img")) {
 					inpParams->outputLevel = MASK_IMG;
+				} else if (!strcmp(optarg,"img:mask")) {
+					inpParams->outputLevel = MASK_IMG;
 				} else if (!strcmp(optarg,"mask:img:overlay")) {
+					inpParams->outputLevel = MASK_IMG_OVERLAY;
+				} else if (!strcmp(optarg,"mask:overlay:img")) {
+					inpParams->outputLevel = MASK_IMG_OVERLAY;
+				} else if (!strcmp(optarg,"img:mask:overlay")) {
+					inpParams->outputLevel = MASK_IMG_OVERLAY;
+				} else if (!strcmp(optarg,"img:overlay:mask")) {
+					inpParams->outputLevel = MASK_IMG_OVERLAY;
+				} else if (!strcmp(optarg,"overlay:mask:img")) {
+					inpParams->outputLevel = MASK_IMG_OVERLAY;
+				} else if (!strcmp(optarg,"overlay:img:mask")) {
 					inpParams->outputLevel = MASK_IMG_OVERLAY;
 				} else {
 					fprintf(stderr, "Undefined output level value.\n");
@@ -150,7 +212,18 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 		}
 	}
 
-	if (inpParams->topLeftX<0 || inpParams->topLeftY<0 || inpParams->sizeX<0 || inpParams->sizeY<0) {
+	if (inpParams->tileSizeX==0 || inpParams->tileSizeY==0) {
+		if (inpParams->inpType==WSI) {
+			inpParams->tileSizeX = DEFAULT_WSI_TILE;
+			inpParams->tileSizeY = DEFAULT_WSI_TILE;
+		} else {
+			inpParams->tileSizeX = DEFAULT_SMALL_TILE;
+			inpParams->tileSizeY = DEFAULT_SMALL_TILE;
+		}
+	}
+
+	if (inpParams->topLeftX<0 || inpParams->topLeftY<0 
+		|| inpParams->sizeX<0 || inpParams->sizeY<0) {
 		fprintf(stderr,"Error in input parameter values. Check -s and -b values; one or more values are negative.\n");
 		return 1;
 	}	

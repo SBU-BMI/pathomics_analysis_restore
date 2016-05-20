@@ -33,7 +33,7 @@ typedef struct _InputParameters {
 	int64_t     tileSizeX,tileSizeY;	
 	int         outputLevel;
 	std::string inpFile;
-	std::string outPrefix;
+	std::string outFolder;
 	std::string analysisId;
 	std::string analysisDesc;
 	std::string subjectId;
@@ -42,7 +42,6 @@ typedef struct _InputParameters {
 	// compress the output files into a zip package
 	std::string zipFile;
 	int isZipped;
-	
 } InputParameters;	
 
 void printParseError(char *argv[]); 

@@ -50,7 +50,7 @@ void printInputParameters(InputParameters *inpParams)
 	std::cout << "inpFile: " << inpParams->inpFile << std::endl;
 	std::cout << "subjectId: " << inpParams->subjectId << std::endl;
 	std::cout << "caseId: " << inpParams->caseId << std::endl;
-	std::cout << "outPrefix: " << inpParams->outPrefix << std::endl;
+	std::cout << "outFolder: " << inpParams->outFolder << std::endl;
 	std::cout << "outputLevel: " << inpParams->outputLevel << std::endl;
 	if (inpParams->isZipped) std::cout << "zipFile: " << inpParams->zipFile;
 }
@@ -106,7 +106,7 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 				inpParams->inpFile = optarg;
 				break;
 			case 'o':
-				inpParams->outPrefix = optarg;
+				inpParams->outFolder = optarg;
 				break;
 			case 'z':
 				inpParams->isZipped = 1;

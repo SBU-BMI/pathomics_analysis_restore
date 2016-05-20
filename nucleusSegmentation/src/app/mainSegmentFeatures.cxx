@@ -70,88 +70,121 @@ const std::string _featureNames[] = {
 		"Polygon"
 };
 
-typedef struct _TileList {
-	std::size_t tileCount;
-	std::vector<string>  inpFiles;
-	std::vector<string>  outPrefixes;
-	std::vector<int64_t> topLeftX; 
-	std::vector<int64_t> topLeftY;
-	std::vector<int64_t> sizeX; 
-	std::vector<int64_t> sizeY;
-} TileList;
+typedef struct _PatchInfo {
+	std::string inpFile;
+	std::string outFolder;
+	std::string outPrefix;
+	int64_t     topLeftX;
+	int64_t     topLeftY;
+	int64_t     sizeX;
+	int64_t     sizeY;
+} PatchInfo;
 
-typedef InputParameters AnalysisParameters;
-int writeAnalysisParametersJSON(AnalysisParameters *analysisParams)  
-{
-	std::ostringstream oss;
-	oss << analysisParams->outPrefix 
-		<< "_mpp_" << analysisParams->mpp
-		<< "_x" << analysisParams->topLeftX
-		<< "_y" << analysisParams->topLeftY
-		<< "-algmeta.json";
-	std::ofstream outputMetadataFile(oss.str().c_str());
+typedef struct _PatchList {
+	std::size_t patchCount;
+	std::vector<PatchInfo> patches;
+} PatchList;
 
-	outputMetadataFile	<< "{ "
-						<< "\"inputType\" : \"" << analysisParams->inpType << "\", " 
-						<< "\"otsuRatio\" : " << analysisParams->otsuRatio << ", "
-						<< "\"curvatureWeight\" : " << analysisParams->curvatureWeight << ", "
-						<< "\"sizeLowerThld\" : " << analysisParams->sizeLowerThld << ", "
-						<< "\"sizeUpperThld\" : " << analysisParams->sizeUpperThld << ", "
-						<< "\"msKernel\" : " << analysisParams->msKernel << ", "
-						<< "\"levelsetNumberOfIteration\" : " << analysisParams->levelsetNumberOfIteration << ", "
-						<< "\"topLeftX\" : " << analysisParams->topLeftX << ", "
-						<< "\"topLeftY\" : " << analysisParams->topLeftY << ", "
-						<< "\"sizeX\" :  " << analysisParams->sizeX << ", "
-						<< "\"sizeY\" : " << analysisParams->sizeY << ", "
-						<< "\"mpp\" : " << analysisParams->mpp << ", "
-						<< "\"tileSizeX\" : " << analysisParams->tileSizeX << ", "
-						<< "\"tileSizeY\" : " << analysisParams->tileSizeY << ", "
-						<< "\"outFolder\" : \"" << analysisParams->outPrefix << "\", "
-						<< "\"subjectId\" : \"" << analysisParams->subjectId << "\", "
-						<< "\"caseId\" : \"" << analysisParams->caseId << "\", "
-						<< "\"outputLevel\" : \"" << analysisParams->outputLevel << "\", "
-						<< "\"analysisId\" : \"" << analysisParams->analysisId << "\", "
-						<< "\"analysisDesc\" : \"" << analysisParams->analysisDesc << "\""
-						<< " }" << std::endl;
-	outputMetadataFile.close();
-	return 0;
-}
+typedef struct _AnalysisParameters {
+	int         inpType; 
+	std::string inpFile;
 
-int captureAnalysisParameters(AnalysisParameters *analysisParams, InputParameters *inpParams)
+	float       otsuRatio;
+	double      curvatureWeight;
+	float       sizeLowerThld;
+	float       sizeUpperThld;
+	float       msKernel;
+  	int64_t     levelsetNumberOfIteration;
+
+	int64_t 	tileMinX, tileMinY;
+	int64_t		tileWidth, tileHeight; 
+	int64_t     patchMinX,patchMinY;	
+	int64_t     patchWidth, patchHeight;
+
+	int         outputLevel;
+	std::string outFilePrefix;
+
+	std::string analysisId;
+	std::string analysisDesc;
+	std::string subjectId;
+	std::string caseId;
+
+	float       mpp;
+	int64_t		imgWidth, imgHeight;
+} AnalysisParameters;	
+
+int captureAnalysisParameters(AnalysisParameters *analysisParams, InputParameters *inpParams) 
 {
 	analysisParams->inpType = inpParams->inpType;
+	analysisParams->inpFile = inpParams->inpFile;
+
 	analysisParams->otsuRatio = inpParams->otsuRatio;
 	analysisParams->curvatureWeight = inpParams->curvatureWeight;
 	analysisParams->sizeLowerThld = inpParams->sizeLowerThld;
 	analysisParams->sizeUpperThld = inpParams->sizeUpperThld;
 	analysisParams->msKernel = inpParams->msKernel;
   	analysisParams->levelsetNumberOfIteration = inpParams->levelsetNumberOfIteration;
-	analysisParams->topLeftX = inpParams->topLeftX;
-	analysisParams->topLeftY = inpParams->topLeftY;
-	analysisParams->sizeX = inpParams->sizeX;
-	analysisParams->sizeY = inpParams->sizeY;
-	analysisParams->mpp = inpParams->mpp;
-	analysisParams->tileSizeX = inpParams->tileSizeX;	
-	analysisParams->tileSizeY = inpParams->tileSizeY;	
-	analysisParams->outputLevel = inpParams->outputLevel;
-	analysisParams->inpFile = inpParams->inpFile;
-	analysisParams->outPrefix = inpParams->outPrefix;
-	analysisParams->analysisId = inpParams->analysisId;
+
+	analysisParams->tileMinX   = inpParams->topLeftX;
+	analysisParams->tileMinY   = inpParams->topLeftY;
+	analysisParams->tileWidth  = inpParams->sizeX;
+	analysisParams->tileHeight = inpParams->sizeY;
+
+	analysisParams->patchWidth  = inpParams->tileSizeX;	
+	analysisParams->patchHeight = inpParams->tileSizeY;	
+
+	analysisParams->outputLevel  = inpParams->outputLevel;
+
+	analysisParams->analysisId   = inpParams->analysisId;
 	analysisParams->analysisDesc = inpParams->analysisDesc;
-	analysisParams->subjectId = inpParams->subjectId;
-	analysisParams->caseId = inpParams->caseId;
+	analysisParams->subjectId    = inpParams->subjectId;
+	analysisParams->caseId       = inpParams->caseId;
+
+	return 0;
+}
+
+int writeAnalysisParametersJSON(std::string outFilePrefix, AnalysisParameters *analysisParams)  
+{
+	std::ostringstream oss;
+	oss << outFilePrefix << "-algmeta.json";
+	std::ofstream outputMetadataFile(oss.str().c_str());
+
+	outputMetadataFile	<< "{ "
+						<< "\"input_type\" : \"" << analysisParams->inpType << "\", " 
+						<< "\"otsu_ratio\" : " << analysisParams->otsuRatio << ", "
+						<< "\"curvature_weight\" : " << analysisParams->curvatureWeight << ", "
+						<< "\"min_size\" : " << analysisParams->sizeLowerThld << ", "
+						<< "\"max_size\" : " << analysisParams->sizeUpperThld << ", "
+						<< "\"ms_kernel\" : " << analysisParams->msKernel << ", "
+						<< "\"levelset_num_iters\" : " << analysisParams->levelsetNumberOfIteration << ", "
+						<< "\"mpp\" : " << analysisParams->mpp << ", "
+						<< "\"image_width\" : " << analysisParams->imgWidth << ", "
+						<< "\"image_height\" : " << analysisParams->imgHeight << ", "
+						<< "\"tile_minx\" : " << analysisParams->tileMinX << ", "
+						<< "\"tile_miny\" : " << analysisParams->tileMinY << ", "
+						<< "\"tile_width\" : " << analysisParams->tileWidth << ", "
+						<< "\"tile_height\" : " << analysisParams->tileHeight << ", "
+						<< "\"patch_minx\" : " << analysisParams->patchMinX << ", "
+						<< "\"patch_miny\" : " << analysisParams->patchMinY << ", "
+						<< "\"patch_width\" : " << analysisParams->patchWidth << ", "
+						<< "\"patch_height\" : " << analysisParams->patchHeight << ", "
+						<< "\"output_level\" : \"" << analysisParams->outputLevel << "\", "
+						<< "\"out_file_prefix\" : \"" << analysisParams->outFilePrefix << "\", "
+						<< "\"subject_id\" : \"" << analysisParams->subjectId << "\", "
+						<< "\"case_id\" : \"" << analysisParams->caseId << "\", "
+						<< "\"analysis_id\" : \"" << analysisParams->analysisId << "\", "
+						<< "\"analysis_desc\" : \"" << analysisParams->analysisDesc << "\""
+						<< " }" << std::endl;
+	outputMetadataFile.close();
+
 	return 0;
 }
 
 #define SKIP_BBOX 4 // do not output the bounding box info -- it is computed while loading to the database
-int writeFeatureCSV(std::string outPrefix, float mpp, int64_t topLeftX, int64_t topLeftY, std::vector< std::vector<FeatureValueType> > &features)
+int writeFeatureCSV(std::string outFilePrefix, std::vector< std::vector<FeatureValueType> > &features)
 {
 	std::ostringstream oss;
-	oss << outPrefix 
-		<< "_mpp_" << mpp 
-		<< "_x" << topLeftX
-		<< "_y" << topLeftY
-		<< "-features.csv";
+	oss << outFilePrefix << "-features.csv";
 	std::ofstream outputFeatureFile(oss.str().c_str());
 	int i;
 	for (i=SKIP_BBOX;i<_numOfFeatures-1;i++) 
@@ -199,15 +232,7 @@ int segmentWSI(InputParameters *inpParams)
 	openslide_t *osr = openslide_open(inpParams->inpFile.c_str());
 	if (osr==NULL) return 1;
 
-	inpParams->outPrefix = inpParams->outPrefix + "/" 
-							+ inpParams->subjectId + "." 
-							+ inpParams->caseId + "." 
-							+ getRandomIDString(); // generateUUIDString(); 
-
-	AnalysisParameters analysisParams;
-	captureAnalysisParameters(&analysisParams,inpParams);
-
-	analysisParams.mpp = ImagenomicAnalytics::WholeSlideProcessing::extractMPP<char>(osr);
+	inpParams->mpp = ImagenomicAnalytics::WholeSlideProcessing::extractMPP<char>(osr);
 
 	int32_t levelOfLargestSize = 0; // 0-th level is the largest
 	int64_t largestW;
@@ -241,8 +266,35 @@ int segmentWSI(InputParameters *inpParams)
 	{
 		int64_t topLeftX = tileTopleftX[iTile];
 		int64_t topLeftY = tileTopleftY[iTile];
-		int64_t sizeX = tileSizeX[iTile];
-		int64_t sizeY = tileSizeY[iTile];
+		int64_t sizeX    = tileSizeX[iTile];
+		int64_t sizeY    = tileSizeY[iTile];
+
+		AnalysisParameters analysisParams;
+		captureAnalysisParameters(&analysisParams,inpParams);
+		std::stringstream outFilePrefix;
+		std::stringstream outPathPrefix;
+		outFilePrefix   << inpParams->subjectId 
+						<< "." << inpParams->caseId 
+						<< "." << getRandomIDString()
+						<< "_mpp_"  << inpParams->mpp
+						<< "_x" << topLeftX
+						<< "_y" << topLeftY;  
+		outPathPrefix	<< inpParams->outFolder 
+						<< "/" 
+						<< outFilePrefix.str();
+
+		analysisParams.outFilePrefix = outFilePrefix.str();
+		analysisParams.mpp       = inpParams->mpp;
+		analysisParams.imgWidth  = largestW;
+		analysisParams.imgHeight = largestH;
+		analysisParams.tileMinX    = topLeftX;
+		analysisParams.tileMinY    = topLeftY;
+		analysisParams.tileWidth   = sizeX;
+		analysisParams.tileHeight  = sizeY;
+		analysisParams.patchMinX   = topLeftX;
+		analysisParams.patchMinY   = topLeftY;
+		analysisParams.patchWidth  = sizeX;
+		analysisParams.patchHeight = sizeY;
 
 		cv::Mat thisTile;
 #pragma omp critical
@@ -260,17 +312,17 @@ int segmentWSI(InputParameters *inpParams)
 		{
 			if (inpParams->outputLevel>=MASK_IMG) {
 				std::ostringstream oss;
-				oss << inpParams->outPrefix << "_mpp_" << inpParams->mpp << "_x" << topLeftX << "_y" << topLeftY << "-tile.jpg"; // Output tile
+				oss << outPathPrefix.str() << "-tile.jpg"; // Output tile
 				ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(thisTileItk, oss.str().c_str(), 0);
 			}
 			if (inpParams->outputLevel>=MASK_ONLY) {
 				std::ostringstream oss;
-				oss << inpParams->outPrefix << "_mpp_" << inpParams->mpp << "_x" << topLeftX << "_y" << topLeftY << "-seg.png"; // Mask tile
+				oss << outPathPrefix.str() << "-seg.png"; // Mask tile
 				ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, oss.str().c_str(), 0);
 			}
 			if (inpParams->outputLevel>=MASK_IMG_OVERLAY) {
 				std::ostringstream oss;
-				oss << inpParams->outPrefix << "_mpp_" << inpParams->mpp << "_x" << topLeftX << "_y" << topLeftY << "-overlay.jpg"; 
+				oss << outPathPrefix.str() << "-overlay.jpg"; 
 				itkRGBImageType::Pointer overlay = ImagenomicAnalytics::ScalarImage::generateSegmentationOverlay<char>(thisTileItk, nucleusBinaryMask);
 				ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(overlay, oss.str().c_str(), 0);
 			}
@@ -287,13 +339,13 @@ int segmentWSI(InputParameters *inpParams)
 
 #pragma omp critical
 		{
-			writeFeatureCSV(inpParams->outPrefix, inpParams->mpp, topLeftX, topLeftY, features);
+			writeFeatureCSV(outPathPrefix.str(), features);
+			writeAnalysisParametersJSON(outPathPrefix.str(),&analysisParams);
 		}
 	}
 
 #pragma omp barrier
 	openslide_close(osr);
-	writeAnalysisParametersJSON(&analysisParams);
 
 	return 0;
 }
@@ -302,18 +354,36 @@ int segmentImg(InputParameters *inpParams)
 {
 	const int ImageDimension = 2;
 
-	inpParams->outPrefix = inpParams->outPrefix + "/" 
-							+ inpParams->subjectId + "." 
-							+ inpParams->caseId + "." 
-							+ getRandomIDString(); // generateUUIDString(); 
-
 	AnalysisParameters analysisParams;
 	captureAnalysisParameters(&analysisParams,inpParams);
 
 	cv::Mat thisTile = imread(inpParams->inpFile.c_str());
 	itkRGBImageType::Pointer thisTileItk =  itk::OpenCVImageBridge::CVMatToITKImage< itkRGBImageType >( thisTile );
-	analysisParams.sizeX = (int64_t)thisTile.cols;
-	analysisParams.sizeY = (int64_t)thisTile.rows;
+	analysisParams.imgWidth  = (int64_t)thisTile.cols;
+	analysisParams.imgHeight = (int64_t)thisTile.rows;
+	analysisParams.mpp       = inpParams->mpp;
+	analysisParams.tileMinX    = 0;
+	analysisParams.tileMinY    = 0;
+	analysisParams.tileWidth   = analysisParams.imgWidth;
+	analysisParams.tileHeight  = analysisParams.imgHeight;
+	analysisParams.patchMinX   = 0;
+	analysisParams.patchMinY   = 0;
+	analysisParams.patchWidth  = analysisParams.imgHeight;
+	analysisParams.patchHeight = analysisParams.imgHeight;
+
+	std::stringstream outFilePrefix;
+	std::stringstream outPathPrefix;
+	outFilePrefix   << inpParams->subjectId 
+					<< "." << inpParams->caseId 
+					<< "." << getRandomIDString()
+					<< "_mpp_"  << inpParams->mpp
+					<< "_x" << 0
+					<< "_y" << 0;  
+	outPathPrefix	<< inpParams->outFolder 
+					<< "/" 
+					<< outFilePrefix.str();
+
+	analysisParams.outFilePrefix = outFilePrefix.str();
 
 	itkUShortImageType::Pointer outputLabelImage  = itkUShortImageType::New();
 	itkUCharImageType::Pointer  nucleusBinaryMask = ImagenomicAnalytics::TileAnalysis::processTile<char>(thisTile, outputLabelImage, 
@@ -323,17 +393,17 @@ int segmentImg(InputParameters *inpParams)
 
 	if (inpParams->outputLevel>=MASK_ONLY) {
 		std::ostringstream oss;
-		oss << inpParams->outPrefix << "_mpp_" << inpParams->mpp << "_x" << inpParams->topLeftX << "_y" << inpParams->topLeftY << "-seg.png";
+		oss << outPathPrefix.str() << "-seg.png";
 		ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, oss.str().c_str(), 0);
 	}
 	if (inpParams->outputLevel>=MASK_IMG) {
 		std::ostringstream oss;
-		oss << inpParams->outPrefix << "_mpp_" << inpParams->mpp << "_x" << inpParams->topLeftX << "_y" << inpParams->topLeftY << "-tile.jpg"; 
+		oss << outPathPrefix.str() << "-tile.jpg"; 
 		ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(thisTileItk, oss.str().c_str(), 0);
 	}
 	if (inpParams->outputLevel>=MASK_IMG_OVERLAY) {
 		std::ostringstream oss;
-		oss << inpParams->outPrefix << "_mpp_" << inpParams->mpp << "_x" << inpParams->topLeftX << "_y" << inpParams->topLeftY << "-overlay.jpg"; 
+		oss << outPathPrefix.str() << "-overlay.jpg"; 
 		itkRGBImageType::Pointer overlay = ImagenomicAnalytics::ScalarImage::generateSegmentationOverlay<char>(thisTileItk, nucleusBinaryMask);
 		ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(overlay, oss.str().c_str(), 0);
 	}
@@ -347,24 +417,19 @@ int segmentImg(InputParameters *inpParams)
 
 	std::vector< std::vector<FeatureValueType> > features = featureAnalyzer.getFeatures();
 
-	writeFeatureCSV(inpParams->outPrefix, inpParams->mpp, inpParams->topLeftX, inpParams->topLeftY, features);
-	writeAnalysisParametersJSON(&analysisParams);
+	writeFeatureCSV(outPathPrefix.str(), features);
+	writeAnalysisParametersJSON(outPathPrefix.str(),&analysisParams);
 
 	return 0;
 }
 
-void resetTileList(TileList& tileList)
+void resetPatchList(PatchList& patchList)
 {
- 	tileList.topLeftX.clear();
-    tileList.topLeftY.clear();
-    tileList.sizeX.clear();
-    tileList.sizeY.clear();
-	tileList.outPrefixes.clear();
-	tileList.inpFiles.clear();
-	tileList.tileCount = 0;
+	patchList.patches.clear(); 
+	patchList.patchCount = 0;
 }
 
-size_t generateTileList(InputParameters *inpParams, TileList& tileList) 
+size_t generatePatchList(InputParameters *inpParams, PatchList& patchList) 
 {
 	int64_t tileSizeX = inpParams->tileSizeX;
 	int64_t tileSizeY = inpParams->tileSizeY;
@@ -378,7 +443,7 @@ size_t generateTileList(InputParameters *inpParams, TileList& tileList)
 		tileSizeY = inpParams->sizeY+1;
 	}
 
-	resetTileList(tileList);
+	resetPatchList(patchList);
 
 	int64_t sizeExtX, sizeExtY;
 	std::string outPrefix;
@@ -392,29 +457,31 @@ size_t generateTileList(InputParameters *inpParams, TileList& tileList)
 				sizeExtY = endY-j;
 			else
 				sizeExtY = tileSizeY;
-			tileList.topLeftX.push_back(i);
-			tileList.topLeftY.push_back(j);
-			tileList.sizeX.push_back(sizeExtX);
-			tileList.sizeY.push_back(sizeExtY);
-			outPrefix = inpParams->outPrefix + "/" 
-							+ inpParams->subjectId + "." 
-							+ inpParams->caseId + "." 
-							+ getRandomIDString(); // generateUUIDString(); 
-			tileList.outPrefixes.push_back(outPrefix);
-			tileList.inpFiles.push_back(inpParams->inpFile);
+
+			PatchInfo patchInfo;
+			patchInfo.topLeftX = i;
+			patchInfo.topLeftY = j;
+			patchInfo.sizeX = sizeExtX;
+			patchInfo.sizeY = sizeExtY;
+			patchInfo.outPrefix = inpParams->subjectId + "." 
+						+ inpParams->caseId + "." 
+						+ getRandomIDString();  
+			patchInfo.outFolder = inpParams->outFolder;
+			patchInfo.inpFile   = inpParams->inpFile;
+			patchList.patches.push_back(patchInfo);
 		}
 	}
-	tileList.tileCount = tileList.topLeftX.size();
+	patchList.patchCount = patchList.patches.size();
 
-	return (std::size_t) tileList.tileCount;
+	return (std::size_t) patchList.patchCount; 
 }
 
-std::size_t readTileList(InputParameters *inpParams, std::vector<TileList>& tileListArray)
+std::size_t readPatchList(InputParameters *inpParams, std::vector<PatchList>& patchListArray)
 {
 	std::ifstream infile(inpParams->inpFile.c_str());
 
 	std::string line;
-	TileList tileList; 
+	PatchList patchList; 
 	InputParameters tmpParams;
 	int lineNum = 1;
 	while (std::getline(infile,line)) {
@@ -443,7 +510,7 @@ std::size_t readTileList(InputParameters *inpParams, std::vector<TileList>& tile
 		}
 
 		// Output folder	
-		if (!(std::getline(ss, tmpParams.outPrefix, ','))) {
+		if (!(std::getline(ss, tmpParams.outFolder, ','))) {
 			std::cerr << "Error readling the tile list file: Missing output folder column at line: " 
 					<< lineNum << std::endl;
 			return 0;
@@ -489,40 +556,45 @@ std::size_t readTileList(InputParameters *inpParams, std::vector<TileList>& tile
         	tmpParams.tileSizeY = atoi(token.c_str());
 		}
 
-		generateTileList(&tmpParams,tileList);
-		tileListArray.push_back(tileList);
+		generatePatchList(&tmpParams,patchList);
+		patchListArray.push_back(patchList);
 	}
 
-	return (std::size_t) tileListArray.size();
+	return (std::size_t) patchListArray.size();
 }
 
 int compressTiles(InputParameters *inpParams)
 {
 	if (inpParams->isZipped==0) return 1;
-	std::string cmd = "zip -ujr " + inpParams->zipFile + " " + inpParams->outPrefix + "/" + "* -x \\*.svs"; 
+	std::string cmd = "zip -ujr " + inpParams->zipFile + " " + inpParams->outFolder + "/" + "* -x \\*.svs"; 
 	system(cmd.c_str());
 	return 0;
 }
 
-int segmentTiles(InputParameters *inpParams, TileList *tileList)
+int segmentTiles(InputParameters *inpParams, PatchList *patchList)
 {
 
 #pragma omp parallel for
-	for (std::size_t iTile=0;iTile<tileList->tileCount;iTile++) {
-		std::string fileName  = tileList->inpFiles[iTile];
-		std::string outPrefix = tileList->outPrefixes[iTile];
-		int64_t topLeftX      = tileList->topLeftX[iTile]; 
-		int64_t topLeftY      = tileList->topLeftY[iTile];
-		int64_t sizeX         = tileList->sizeX[iTile]; 
-		int64_t sizeY         = tileList->sizeY[iTile];
+	for (std::size_t iPatch=0;iPatch<patchList->patchCount;iPatch++) {
+		PatchInfo patchInfo   = patchList->patches[iPatch];
+		std::string fileName  = patchInfo.inpFile; 
+		std::string outPrefix = patchInfo.outPrefix; 
+		std::string outFolder = patchInfo.outFolder;
+		int64_t topLeftX      = patchInfo.topLeftX;  
+		int64_t topLeftY      = patchInfo.topLeftY; 
+		int64_t sizeX         = patchInfo.sizeX;  
+		int64_t sizeY         = patchInfo.sizeY; 
 
 		AnalysisParameters analysisParams;
 		captureAnalysisParameters(&analysisParams,inpParams);
-		analysisParams.topLeftX  = topLeftX;
-		analysisParams.topLeftY  = topLeftY;
-		analysisParams.sizeX     = sizeX;
-		analysisParams.sizeY     = sizeY;
-		analysisParams.outPrefix = outPrefix;
+		analysisParams.tileMinX    = inpParams->topLeftX;
+		analysisParams.tileMinY    = inpParams->topLeftY;
+		analysisParams.tileWidth   = inpParams->sizeX;
+		analysisParams.tileHeight  = inpParams->sizeY;
+		analysisParams.patchMinX   = topLeftX;
+		analysisParams.patchMinY   = topLeftY;
+		analysisParams.patchWidth  = sizeX;
+		analysisParams.patchHeight = sizeY; 
 
 #pragma omp critical
 		{
@@ -535,6 +607,8 @@ int segmentTiles(InputParameters *inpParams, TileList *tileList)
 		int32_t levelOfLargestSize = 0; // 0-th level is the largest
 		float   mpp;
 		char    noErrors = 1;
+		std::stringstream outFilePrefix;
+		std::stringstream outPathPrefix;
 #pragma omp critical
 		{
 			int64_t w[1],h[1];
@@ -548,6 +622,19 @@ int segmentTiles(InputParameters *inpParams, TileList *tileList)
 				}
 				thisTile = ImagenomicAnalytics::WholeSlideProcessing::extractTileFromWSI<char>(osr, levelOfLargestSize, 
 							topLeftX, topLeftY, sizeX, sizeY);
+
+				analysisParams.imgWidth  = w[0]; 
+				analysisParams.imgHeight = h[0]; 
+				analysisParams.mpp       = mpp;
+
+				outFilePrefix   << outPrefix  
+								<< "_mpp_" << mpp
+								<< "_x" << topLeftX
+								<< "_y" << topLeftY;  
+				outPathPrefix	<< outFolder 
+								<< "/" 
+								<< outFilePrefix.str();
+				analysisParams.outFilePrefix = outFilePrefix.str();
 				openslide_close(osr);
 			} catch (...) {
 				std::cerr 	<< "ERROR: Requested tile ("  
@@ -571,17 +658,17 @@ int segmentTiles(InputParameters *inpParams, TileList *tileList)
 			{
 				if (inpParams->outputLevel>=MASK_IMG) {
 					std::ostringstream oss;
-					oss << outPrefix << "_mpp_" << mpp << "_x" << topLeftX << "_y" << topLeftY << "-tile.jpg"; 
+					oss << outPathPrefix.str() << "-tile.jpg"; 
 					ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(thisTileItk, oss.str().c_str(), 0);
 				}
 				if (inpParams->outputLevel>=MASK_ONLY) {
 					std::ostringstream oss;
-					oss << outPrefix << "_mpp_" << mpp << "_x" << topLeftX << "_y" << topLeftY << "-seg.png"; // Mask tile 
+					oss << outPathPrefix.str() << "-seg.png"; // Mask tile 
 					ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, oss.str().c_str(), 0);
 				}
 				if (inpParams->outputLevel>=MASK_IMG_OVERLAY) {
 					std::ostringstream oss;
-					oss << outPrefix << "_mpp_" << mpp << "_x" << topLeftX << "_y" << topLeftY << "-overlay.jpg"; 
+					oss << outPathPrefix.str() << "-overlay.jpg"; 
 					itkRGBImageType::Pointer overlay = ImagenomicAnalytics::ScalarImage::generateSegmentationOverlay<char>(thisTileItk, nucleusBinaryMask);
 					ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(overlay, oss.str().c_str(), 0);
 				}
@@ -597,8 +684,8 @@ int segmentTiles(InputParameters *inpParams, TileList *tileList)
 
 #pragma omp critical
 			{
-				writeFeatureCSV(outPrefix, mpp, topLeftX, topLeftY, features);
-				writeAnalysisParametersJSON(&analysisParams);
+				writeFeatureCSV(outPathPrefix.str(),features);
+				writeAnalysisParametersJSON(outPathPrefix.str(),&analysisParams);
 			}
 		}
 	}
@@ -607,6 +694,7 @@ int segmentTiles(InputParameters *inpParams, TileList *tileList)
 	return 0;
 }
 
+#if 0
 int segmentSingleTile(InputParameters *inpParams)
 {
 	std::string fileName  = inpParams->inpFile; 
@@ -678,6 +766,7 @@ int segmentSingleTile(InputParameters *inpParams)
 
 	return 0;
 }
+#endif
 
 int main(int argc, char **argv)
 {
@@ -697,15 +786,16 @@ int main(int argc, char **argv)
 	} else if (inpParams.inpType==IMG) {
 		segmentImg(&inpParams);
 	} else if (inpParams.inpType==TILES) {
-		std::vector<TileList> tileListArray;
-		std::size_t tileArrayCount = readTileList(&inpParams,tileListArray); 
-		if (tileArrayCount==0) return 1;
-		for (int i=0;i<tileArrayCount;i++) 
-			segmentTiles(&inpParams,&tileListArray[i]);
+		std::vector<PatchList> patchListArray;
+		std::size_t patchArrayCount = readPatchList(&inpParams,patchListArray); 
+		if (patchArrayCount<=0) return 1;
+		for (int i=0;i<patchArrayCount;i++) 
+			segmentTiles(&inpParams,&patchListArray[i]);
 	} else if (inpParams.inpType==ONETILE) {
-		TileList tileList;
-		std::size_t tileCount = generateTileList(&inpParams,tileList);
-		segmentTiles(&inpParams,&tileList);
+		PatchList patchList;
+		std::size_t patchCount = generatePatchList(&inpParams,patchList);
+		if (patchCount<=0) return 1;
+		segmentTiles(&inpParams,&patchList);
 		compressTiles(&inpParams);
 	} else {
 		std::cerr << "Unknown input type." << std::endl;

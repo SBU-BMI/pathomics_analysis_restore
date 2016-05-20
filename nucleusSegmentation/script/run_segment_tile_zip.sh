@@ -3,7 +3,8 @@
 echo "$#"
 
 if [ "$#" -ne 16 ]; then
-	echo "Usage: runSegmentTileZip.sh -i <input image> -o <output prefix> -a <analysis id> -c <cancer type> -l <tileLeftX,tileLeftY> -s <tileSizeX,tileSizeY> -p <patchSizeX,patchSizeY> -z <zipFilename>"
+	echo "Usage: run_segment_tile_zip.sh -i <input image> -o <output folder> -a <analysis id> -c <cancer type> -l <tileLeftX,tileLeftY> -s <tileSizeX,tileSizeY> -p <patchSizeX,patchSizeY> -z <zipFilename>"
+
 	exit 1;
 fi
 

@@ -4,6 +4,7 @@ import sys
 import os
 import subprocess
 import getopt
+import random
 
 def print_help():
     print 'run_docker_segment [-h|command <arguments>]'
@@ -64,13 +65,13 @@ def print_helps(argv):
         sys.exit(2);
 
 def run_start(argv):
-    print argv
     if (len(argv)>1):
-        run_cmd = "docker run --name " + argv[0] + " -it -d " + argv[1] + "/bin/bash"
+        run_cmd = "docker run --name " + argv[0] + " -it -d " + argv[1] + " /bin/bash"
     else:
         run_cmd = "docker run --name " + argv[0] + " -it -d sbubmi/nucleus_segmentation:1.0 /bin/bash"
-    print run_cmd
-    # subprocess.call(run_cmd,shell=True)
+    print "Starting docker container." 
+    subprocess.call(run_cmd,shell=True)
+    print "Use docker name: " + argv[0] + " in commands segment and remove."
 
 def run_remove(docker_name):
     run_cmd = "docker kill " + docker_name
@@ -118,31 +119,50 @@ def run_segment(argv,docker_name,inp_file,zip_file):
     print zip_file_base
 
     print "Copying the input file to docker [",docker_name,"]."
-    run_cmd = "docker cp " + inp_file + " " + docker_name + ":/tmp/."
+    random.seed()
+    rnd_val = random.randrange(1000000)
+    tmp_input  = "/tmp/input"  + `rnd_val`
+    tmp_output = "/tmp/input"  + `rnd_val`
+    tmp_zip    = "/tmp/zip" + `rnd_val`
+    run_cmd = "docker exec " + docker_name + " mkdir -p " + tmp_input 
+    print run_cmd
+    subprocess.call(run_cmd,shell=True)
+    run_cmd = "docker exec " + docker_name + " mkdir -p " + tmp_output 
+    print run_cmd
+    subprocess.call(run_cmd,shell=True)
+    run_cmd = "docker exec " + docker_name + " mkdir -p " + tmp_zip 
+    print run_cmd
+    subprocess.call(run_cmd,shell=True)
+    run_cmd = "docker cp " + inp_file + " " + docker_name + ":" + tmp_input + "/."
+    print run_cmd
     subprocess.call(run_cmd,shell=True)
 
     print "Running the analysis pipeline."
-    run_cmd = "mainSegmentFeatures"
+    run_cmd = "mainSegmentFeatures -t onetile -o " + tmp_output
+    run_cmd = run_cmd + " -i " + tmp_input + "/" + inp_file_base
+    run_cmd = run_cmd + " -z " + tmp_zip   + "/" + zip_file_base
     i = 0
     while (i<len(argv)):
-        if (argv[i]=="-i"):
-            run_cmd += " -i "
-            run_cmd += "/tmp/" + inp_file_base
-            i += 2
-        elif (argv[i]=="-z"):
-            run_cmd += " -z "
-            run_cmd += "/tmp/" + zip_file_base
-            i += 2
-        else:
-            run_cmd += " "
-            run_cmd += argv[i]
-            i += 1
+       run_cmd += " "
+       run_cmd += argv[i]
+       i += 1
     run_cmd = "docker exec " + docker_name + " " + run_cmd
     print run_cmd
     subprocess.call(run_cmd,shell=True)
 
     print "Copying the zip file to destination folder."
-    run_cmd = "docker cp " + docker_name + ":/tmp/" + zip_file_base + " " + zip_file
+    run_cmd = "docker cp " + docker_name + ":" + tmp_zip + "/" + zip_file_base + " " + zip_file
+    print run_cmd
+    subprocess.call(run_cmd,shell=True)
+    
+    print "Cleaning up temp folders in the docker container."
+    run_cmd = "docker exec " + docker_name + " rm -rf " + tmp_output  
+    print run_cmd
+    subprocess.call(run_cmd,shell=True)
+    run_cmd = "docker exec " + docker_name + " rm -rf " + tmp_input  
+    print run_cmd
+    subprocess.call(run_cmd,shell=True)
+    run_cmd = "docker exec " + docker_name + " rm -rf " + tmp_zip  
     print run_cmd
     subprocess.call(run_cmd,shell=True)
 
@@ -150,26 +170,30 @@ def main(argv):
     if (len(argv)<2 or argv[0]=='-h'):
         print_helps(argv)
 
-    if (argv[0]=='start' and len(argv)>=2):
-        run_start(argv[1:])
-        sys.exit(0)
+    if (argv[0]=='start'):
+        if (len(argv)>=2):
+            run_start(argv[1:])
+            sys.exit(0)
+        else:
+            print_help_start()
+            sys.exit(2)
+    elif (argv[0]=='remove'):
+        if (len(argv)==2):
+           run_remove(argv[1])
+           sys.exit(0)
+        else:
+            print_help_remove()
+            sys.exit(2)
+    elif (argv[0]=='segment'):
+        if (len(argv)>4):
+            run_segment(argv[4:],argv[1],argv[2],argv[3])
+            sys.exit(0)
+        else:
+            print_help_segment()
+            sys.exit(2)
     else:
-        print_help_start()
+        print_helps(argv)
         sys.exit(2)
-
-    if (argv[0]=='remove' and len(argv)==2):
-        run_remove(argv[1])
-        sys.exit(0)
-    else:
-        print_help_remove()
-        sys.exit(2);
-
-    if (argv[0]=='segment' and len(argv)>4):
-        run_segment(argv[4:],argv[1],argv[2],argv[3])
-        sys.exit(0)
-    else:
-        print_help_segment()
-        sys.exit(2);
 
 if __name__ == '__main__':
 	main(sys.argv[1:])

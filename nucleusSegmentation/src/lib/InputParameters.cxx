@@ -72,7 +72,7 @@ void printInputParameters(InputParameters *inpParams)
 	std::cout << "output_folder: " << inpParams->outFolder << std::endl;
 	std::cout << "analysis_id: " << inpParams->analysisId << std::endl;
 	std::cout << "analysis_desc: " << inpParams->analysisDesc << std::endl;
-	if (inpParams->isZipped) std::cout << "zipFile: " << inpParams->zipFile;
+	if (inpParams->isZipped) std::cout << "zipFile: " << inpParams->zipFile << std::endl;
 	switch (inpParams->outputLevel) {
 		case MASK_ONLY: 
 			std::cout << "output_level: MASK" << std::endl;

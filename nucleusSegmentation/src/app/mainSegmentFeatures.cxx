@@ -149,8 +149,44 @@ int writeAnalysisParametersJSON(std::string outFilePrefix, AnalysisParameters *a
 	oss << outFilePrefix << "-algmeta.json";
 	std::ofstream outputMetadataFile(oss.str().c_str());
 
+	std::string inpTypeStr;
+	switch (analysisParams->inpType) {
+		case WSI:
+			inpTypeStr = "wsi";
+			break;
+		case TILES:
+			inpTypeStr = "tiles";
+			break;
+		case ONETILE:
+			inpTypeStr = "onetile";
+			break;
+		case IMG:
+			inpTypeStr = "img";
+			break;
+		default:
+			inpTypeStr = "undefined";
+			break;
+	}
+	
+	std::string outputLevelStr;
+	switch (analysisParams->outputLevel) {
+		case MASK_ONLY: 
+			outputLevelStr = "mask";
+			break;
+		case MASK_IMG: 
+			outputLevelStr = "mask:img";
+			break;
+		case MASK_IMG_OVERLAY: 
+			outputLevelStr = "mask:img:overlay";
+			break;
+		default:
+			outputLevelStr = "undefined";
+			break;
+	} 
+
+
 	outputMetadataFile	<< "{ "
-						<< "\"input_type\" : \"" << analysisParams->inpType << "\", " 
+						<< "\"input_type\" : \"" << inpTypeStr << "\", " 
 						<< "\"otsu_ratio\" : " << analysisParams->otsuRatio << ", "
 						<< "\"curvature_weight\" : " << analysisParams->curvatureWeight << ", "
 						<< "\"min_size\" : " << analysisParams->sizeLowerThld << ", "
@@ -168,7 +204,7 @@ int writeAnalysisParametersJSON(std::string outFilePrefix, AnalysisParameters *a
 						<< "\"patch_miny\" : " << analysisParams->patchMinY << ", "
 						<< "\"patch_width\" : " << analysisParams->patchWidth << ", "
 						<< "\"patch_height\" : " << analysisParams->patchHeight << ", "
-						<< "\"output_level\" : \"" << analysisParams->outputLevel << "\", "
+						<< "\"output_level\" : \"" << outputLevelStr << "\", "
 						<< "\"out_file_prefix\" : \"" << analysisParams->outFilePrefix << "\", "
 						<< "\"subject_id\" : \"" << analysisParams->subjectId << "\", "
 						<< "\"case_id\" : \"" << analysisParams->caseId << "\", "

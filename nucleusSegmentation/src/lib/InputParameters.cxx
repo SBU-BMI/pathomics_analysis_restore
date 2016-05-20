@@ -12,47 +12,81 @@
 
 void printParseError(char *argv[]) 
 {
-	std::cerr 	<< "Usage: " << argv[0] << " [parameters]" << std::endl;
-	std::cerr	<< "   -t [onetile|tiles] " << std::endl
+	std::cerr 	<< "Usage: " << argv[0] << " -h|[parameters]" << std::endl
+				<< "  Required arguments: " << std::endl
+				<< "   -t [onetile|tiles] " << std::endl
 				<< "   -i <input file>" << std::endl
 				<< "   -o <output folder>" << std::endl
-				<< "   -m <mpp>" << std::endl
+				<< "   -s <tile_minx,tile_miny>" << std::endl
+				<< "   -b <tile_width,tile_height>" << std::endl
+				<< "   -d <patch_width,patch_height>" << std::endl
+				<< "   -a <analysis_id: string>" << std::endl
+				<< "   -c <case_id: string>" << std::endl
+				<< "   -p <subject_id: string>" << std::endl
+				<< "  Optional arguments: " << std::endl
 				<< "   -r <otsuRatio> " << std::endl
 				<< "   -w <curvatureWeight>" << std::endl
 				<< "   -l <sizeLowerThld>" << std::endl
 				<< "   -u <sizeUpperThld>" << std::endl
 				<< "   -k <msKernel>" << std::endl
 				<< "   -n <levelsetNumberOfIterations>" << std::endl
-				<< "   -s <topLeftX,topLeftY>" << std::endl
-				<< "   -b <sizeX,sizeY>" << std::endl
-				<< "   -a <analysisId: string>" << std::endl
-				<< "   -c <caseId: string>" << std::endl
-				<< "   -p <subjectId: string>" << std::endl
+				<< "   -m <mpp>" << std::endl
 				<< "   -e <analysis desc: string>" << std::endl
-				<< "   -d <patchSizeX,patchSizeY>" << std::endl
 				<< "   -z <zipFile - compression works with onetile only.>" << std::endl
 				<< "   -v <output level: mask|mask:img|mask:img:overlay>" << std::endl;
 }
 
 void printInputParameters(InputParameters *inpParams)
 {
-	std::cout << "Input type: " << inpParams->inpType << std::endl; 
-	std::cout << "otsuRatio : " << inpParams->otsuRatio << std::endl;
-	std::cout << "curvatureWeight: " << inpParams->curvatureWeight << std::endl;
-	std::cout << "sizeLowerThld: " << inpParams->sizeLowerThld << std::endl;
-	std::cout << "sizeUpperThld: " << inpParams->sizeUpperThld << std::endl;
-	std::cout << "msKernel: " << inpParams->msKernel << std::endl;
-  	std::cout << "levelsetNumberOfIteration: " << inpParams->levelsetNumberOfIteration << std::endl;
-	std::cout << "topLeftX: " << inpParams->topLeftX << " topLeftY: " <<  inpParams->topLeftY << std::endl;
-	std::cout << "sizeX:  " << inpParams->sizeX << " sizeY: " << inpParams->sizeY << std::endl;
+	std::cout << "INPUT PARAMETERS: " << std::endl;
+	switch (inpParams->inpType) {
+		case WSI:
+			std::cout << "input_type: WSI" << std::endl; 
+			break;
+		case TILES:
+			std::cout << "input_type: TILES" << std::endl; 
+			break;
+		case ONETILE:
+			std::cout << "input_type: ONETILE" << std::endl; 
+			break;
+		case IMG:
+			std::cout << "input_type: IMG" << std::endl; 
+			break;
+		default:
+			std::cerr << "Error: Undefined input type." << std::endl;
+			break;
+	}
+	std::cout << "otsu_ratio: " << inpParams->otsuRatio << std::endl;
+	std::cout << "curvature_weight: " << inpParams->curvatureWeight << std::endl;
+	std::cout << "min_size: " << inpParams->sizeLowerThld << std::endl;
+	std::cout << "max_size: " << inpParams->sizeUpperThld << std::endl;
+	std::cout << "ms_kernel: " << inpParams->msKernel << std::endl;
+  	std::cout << "levelset_num_iters: " << inpParams->levelsetNumberOfIteration << std::endl;
+	std::cout << "tile_minx: " << inpParams->topLeftX << " tile_miny: " <<  inpParams->topLeftY << std::endl;
+	std::cout << "tile_width: " << inpParams->sizeX << " tile_height: " << inpParams->sizeY << std::endl;
 	std::cout << "mpp: " << inpParams->mpp << std::endl;
-	std::cout << "tileSizeX: " << inpParams->tileSizeX << " tileSizeY: " << inpParams->tileSizeY << std::endl;	
-	std::cout << "inpFile: " << inpParams->inpFile << std::endl;
-	std::cout << "subjectId: " << inpParams->subjectId << std::endl;
-	std::cout << "caseId: " << inpParams->caseId << std::endl;
-	std::cout << "outFolder: " << inpParams->outFolder << std::endl;
-	std::cout << "outputLevel: " << inpParams->outputLevel << std::endl;
+	std::cout << "patch_width: " << inpParams->tileSizeX << " patch_height: " << inpParams->tileSizeY << std::endl;	
+	std::cout << "input_file: " << inpParams->inpFile << std::endl;
+	std::cout << "subject_id: " << inpParams->subjectId << std::endl;
+	std::cout << "case_id: " << inpParams->caseId << std::endl;
+	std::cout << "output_folder: " << inpParams->outFolder << std::endl;
+	std::cout << "analysis_id: " << inpParams->analysisId << std::endl;
+	std::cout << "analysis_desc: " << inpParams->analysisDesc << std::endl;
 	if (inpParams->isZipped) std::cout << "zipFile: " << inpParams->zipFile;
+	switch (inpParams->outputLevel) {
+		case MASK_ONLY: 
+			std::cout << "output_level: MASK" << std::endl;
+			break;
+		case MASK_IMG: 
+			std::cout << "output_level: MASK:IMG" << std::endl;
+			break;
+		case MASK_IMG_OVERLAY: 
+			std::cout << "output_level: MASK:IMG:OVERLAY" << std::endl;
+			break;
+		default:
+			std::cerr << "ERROR: Undefined output level." << std::endl;
+			break;
+	} 
 }
 
 int parseInputParameters(int argc, char **argv, InputParameters *inpParams) 
@@ -82,6 +116,15 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 	inpParams->caseId = "";
 
 	opterr = 0;
+	int t_required = 0;
+	int i_required = 0;
+	int o_required = 0;
+	int s_required = 0;
+	int b_required = 0;
+	int d_required = 0;
+	int a_required = 0;
+	int c_required = 0;
+	int p_required = 0;
 	while ((c = getopt (argc, argv, "ht:i:o:m:r:w:l:u:k:n:s:b:d:v:a:e:c:p:z:")) != -1) {
 		switch (c)
 		{
@@ -100,13 +143,16 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 					fprintf(stderr, "Undefined input type.\n");
 					return 1;
 				}
+				t_required = 1;
 				break;
 			}
 			case 'i':
 				inpParams->inpFile = optarg;
+				i_required = 1;
 				break;
 			case 'o':
 				inpParams->outFolder = optarg;
+				o_required = 1;
 				break;
 			case 'z':
 				inpParams->isZipped = 1;
@@ -114,12 +160,15 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 				break;
 			case 'c':
 				inpParams->caseId = optarg;
+				c_required = 1;
 				break;
 			case 'p':
 				inpParams->subjectId = optarg;
+				p_required = 1;
 				break;
 			case 'a':
 				inpParams->analysisId = optarg;
+				a_required = 1;
 				break;
 			case 'e':
 				inpParams->analysisDesc = optarg;
@@ -160,6 +209,7 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 					fprintf(stderr,"ERROR: Option -s is missing <leftX,leftY> value.\n");
 					return 1;
 				}
+				s_required = 1;
 				break;
 			}
 			case 'b': {
@@ -177,6 +227,7 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 					fprintf(stderr,"ERROR: Option -b is missing <sizeX,sizeY> value.\n");
 					return 1;
 				}
+				b_required = 1;
 				break;
 			}
 			case 'd': {
@@ -194,6 +245,7 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 					fprintf(stderr,"ERROR: Option -d is missing <patchSizeX,patchSizeY> value.\n");
 					return 1;
 				}
+				d_required = 1;
 				break;
 			}
 			case 'v':
@@ -223,6 +275,13 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams)
 			default:
 				return 1;	
 		}
+	}
+
+	if (!(t_required && i_required && o_required 
+			&& s_required && b_required && d_required 
+			&& a_required && c_required && p_required)) {
+		fprintf(stderr, "Missing required arguments.");
+		return 1;
 	}
 
 	if (inpParams->subjectId.compare("")==0 || inpParams->caseId.compare("")==0) {

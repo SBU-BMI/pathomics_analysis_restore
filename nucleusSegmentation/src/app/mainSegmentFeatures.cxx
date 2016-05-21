@@ -43,7 +43,7 @@
 
 const int _numOfFeatures = 25;
 const std::string _featureNames[] = {
-		"BoundingBoxTopLeftX",
+	"BoundingBoxTopLeftX",
         "BoundingBoxTopLeftY",
         "BoundingBoxBottomRightX",
         "BoundingBoxBottomRightY",
@@ -61,13 +61,13 @@ const std::string _featureNames[] = {
         "EquivalentEllipsoidDiameter0",
         "EquivalentEllipsoidDiameter1",
         "Flatness",
-		"meanR",
+	"meanR",
     	"meanG",
     	"meanB",
     	"stdR",
     	"stdG",
     	"stdB",
-		"Polygon"
+	"Polygon"
 };
 
 typedef struct _PatchInfo {
@@ -186,31 +186,125 @@ int writeAnalysisParametersJSON(std::string outFilePrefix, AnalysisParameters *a
 
 
 	outputMetadataFile	<< "{ "
-						<< "\"input_type\" : \"" << inpTypeStr << "\", " 
-						<< "\"otsu_ratio\" : " << analysisParams->otsuRatio << ", "
-						<< "\"curvature_weight\" : " << analysisParams->curvatureWeight << ", "
-						<< "\"min_size\" : " << analysisParams->sizeLowerThld << ", "
-						<< "\"max_size\" : " << analysisParams->sizeUpperThld << ", "
-						<< "\"ms_kernel\" : " << analysisParams->msKernel << ", "
-						<< "\"levelset_num_iters\" : " << analysisParams->levelsetNumberOfIteration << ", "
-						<< "\"mpp\" : " << analysisParams->mpp << ", "
-						<< "\"image_width\" : " << analysisParams->imgWidth << ", "
-						<< "\"image_height\" : " << analysisParams->imgHeight << ", "
-						<< "\"tile_minx\" : " << analysisParams->tileMinX << ", "
-						<< "\"tile_miny\" : " << analysisParams->tileMinY << ", "
-						<< "\"tile_width\" : " << analysisParams->tileWidth << ", "
-						<< "\"tile_height\" : " << analysisParams->tileHeight << ", "
-						<< "\"patch_minx\" : " << analysisParams->patchMinX << ", "
-						<< "\"patch_miny\" : " << analysisParams->patchMinY << ", "
-						<< "\"patch_width\" : " << analysisParams->patchWidth << ", "
-						<< "\"patch_height\" : " << analysisParams->patchHeight << ", "
-						<< "\"output_level\" : \"" << outputLevelStr << "\", "
-						<< "\"out_file_prefix\" : \"" << analysisParams->outFilePrefix << "\", "
-						<< "\"subject_id\" : \"" << analysisParams->subjectId << "\", "
-						<< "\"case_id\" : \"" << analysisParams->caseId << "\", "
-						<< "\"analysis_id\" : \"" << analysisParams->analysisId << "\", "
-						<< "\"analysis_desc\" : \"" << analysisParams->analysisDesc << "\""
-						<< " }" << std::endl;
+				<< "\"input_type\" : \"" << inpTypeStr << "\", " 
+				<< "\"otsu_ratio\" : " << analysisParams->otsuRatio << ", "
+				<< "\"curvature_weight\" : " << analysisParams->curvatureWeight << ", "
+				<< "\"min_size\" : " << analysisParams->sizeLowerThld << ", "
+				<< "\"max_size\" : " << analysisParams->sizeUpperThld << ", "
+				<< "\"ms_kernel\" : " << analysisParams->msKernel << ", "
+				<< "\"levelset_num_iters\" : " << analysisParams->levelsetNumberOfIteration << ", "
+				<< "\"mpp\" : " << analysisParams->mpp << ", "
+				<< "\"image_width\" : " << analysisParams->imgWidth << ", "
+				<< "\"image_height\" : " << analysisParams->imgHeight << ", "
+				<< "\"tile_minx\" : " << analysisParams->tileMinX << ", "
+				<< "\"tile_miny\" : " << analysisParams->tileMinY << ", "
+				<< "\"tile_width\" : " << analysisParams->tileWidth << ", "
+				<< "\"tile_height\" : " << analysisParams->tileHeight << ", "
+				<< "\"patch_minx\" : " << analysisParams->patchMinX << ", "
+				<< "\"patch_miny\" : " << analysisParams->patchMinY << ", "
+				<< "\"patch_width\" : " << analysisParams->patchWidth << ", "
+				<< "\"patch_height\" : " << analysisParams->patchHeight << ", "
+				<< "\"output_level\" : \"" << outputLevelStr << "\", "
+				<< "\"out_file_prefix\" : \"" << analysisParams->outFilePrefix << "\", "
+				<< "\"subject_id\" : \"" << analysisParams->subjectId << "\", "
+				<< "\"case_id\" : \"" << analysisParams->caseId << "\", "
+				<< "\"analysis_id\" : \"" << analysisParams->analysisId << "\", "
+				<< "\"analysis_desc\" : \"" << analysisParams->analysisDesc << "\""
+				<< " }" << std::endl;
+	outputMetadataFile.close();
+
+	return 0;
+}
+
+int writeAnalysisParametersCSV(std::string outFilePrefix, AnalysisParameters *analysisParams)  
+{
+	std::ostringstream oss;
+	oss << outFilePrefix << "-algmeta.csv";
+	std::ofstream outputMetadataFile(oss.str().c_str());
+	outputMetadataFile	<< "input_type," 
+				<< "otsu_ratio,"
+				<< "curvature_weight,"
+				<< "min_size,"
+				<< "max_size,"
+				<< "ms_kernel,"
+				<< "levelset_num_iters,"
+				<< "mpp,"
+				<< "image_width,"
+				<< "image_height,"
+				<< "tile_minx,"
+				<< "tile_miny,"
+				<< "tile_width,"
+				<< "tile_height,"
+				<< "patch_minx,"
+				<< "patch_miny,"
+				<< "patch_width,"
+				<< "patch_height,"
+				<< "output_level,"
+				<< "out_file_prefix,"
+				<< "subject_id,"
+				<< "case_id,"
+				<< "analysis_id,"
+				<< "analysis_desc" 
+				<< std::endl;
+	std::string inpTypeStr;
+	switch (analysisParams->inpType) {
+		case WSI:
+			inpTypeStr = "wsi";
+			break;
+		case TILES:
+			inpTypeStr = "tiles";
+			break;
+		case ONETILE:
+			inpTypeStr = "onetile";
+			break;
+		case IMG:
+			inpTypeStr = "img";
+			break;
+		default:
+			inpTypeStr = "undefined";
+			break;
+	}
+	
+	std::string outputLevelStr;
+	switch (analysisParams->outputLevel) {
+		case MASK_ONLY: 
+			outputLevelStr = "mask";
+			break;
+		case MASK_IMG: 
+			outputLevelStr = "mask:img";
+			break;
+		case MASK_IMG_OVERLAY: 
+			outputLevelStr = "mask:img:overlay";
+			break;
+		default:
+			outputLevelStr = "undefined";
+			break;
+	} 
+	outputMetadataFile	<< inpTypeStr << "," 
+				<< analysisParams->otsuRatio << ","
+				<< analysisParams->curvatureWeight << ","
+				<< analysisParams->sizeLowerThld << ","
+				<< analysisParams->sizeUpperThld << ","
+				<< analysisParams->msKernel << ","
+				<< analysisParams->levelsetNumberOfIteration << ","
+				<< analysisParams->mpp << ","
+				<< analysisParams->imgWidth << ","
+				<< analysisParams->imgHeight << ","
+				<< analysisParams->tileMinX << ","
+				<< analysisParams->tileMinY << ","
+				<< analysisParams->tileWidth << ","
+				<< analysisParams->tileHeight << ","
+				<< analysisParams->patchMinX << ","
+				<< analysisParams->patchMinY << ","
+				<< analysisParams->patchWidth << ","
+				<< analysisParams->patchHeight << ","
+				<< outputLevelStr << ","
+				<< analysisParams->outFilePrefix << ","
+				<< analysisParams->subjectId << ","
+				<< analysisParams->caseId << ","
+				<< analysisParams->analysisId << ","
+				<< analysisParams->analysisDesc 
+				<< std::endl;
 	outputMetadataFile.close();
 
 	return 0;
@@ -377,6 +471,7 @@ int segmentWSI(InputParameters *inpParams)
 		{
 			writeFeatureCSV(outPathPrefix.str(), features);
 			writeAnalysisParametersJSON(outPathPrefix.str(),&analysisParams);
+			writeAnalysisParametersCSV(outPathPrefix.str(),&analysisParams);
 		}
 	}
 
@@ -455,6 +550,7 @@ int segmentImg(InputParameters *inpParams)
 
 	writeFeatureCSV(outPathPrefix.str(), features);
 	writeAnalysisParametersJSON(outPathPrefix.str(),&analysisParams);
+	writeAnalysisParametersCSV(outPathPrefix.str(),&analysisParams);
 
 	return 0;
 }
@@ -722,6 +818,7 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList)
 			{
 				writeFeatureCSV(outPathPrefix.str(),features);
 				writeAnalysisParametersJSON(outPathPrefix.str(),&analysisParams);
+				writeAnalysisParametersCSV(outPathPrefix.str(),&analysisParams);
 			}
 		}
 	}

@@ -68,7 +68,7 @@ def run_start(argv):
     if (len(argv)>1):
         run_cmd = "docker run --name " + argv[0] + " -it -d " + argv[1] + " /bin/bash"
     else:
-        run_cmd = "docker run --name " + argv[0] + " -it -d sbubmi/nucleus_segmentation:1.0 /bin/bash"
+        run_cmd = "docker run --name " + argv[0] + " -it -d sbubmi/pathomics_nucleus:1.0 /bin/bash"
     print "Starting docker container." 
     subprocess.call(run_cmd,shell=True)
     print "Use docker name: " + argv[0] + " in commands segment and remove."

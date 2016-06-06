@@ -746,6 +746,10 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList)
 			int64_t w[1],h[1];
 			try {
 				openslide_t *osr = openslide_open(fileName.c_str());
+				if (osr==NULL) {
+					std::cerr << "ERROR: Cannot read file: " << fileName << std::endl;
+					throw 1;
+				}
 				mpp = ImagenomicAnalytics::WholeSlideProcessing::extractMPP<char>(osr);
 				openslide_get_level_dimensions(osr, levelOfLargestSize, w, h);
 				if ((topLeftX+sizeX)>w[0] || (topLeftY+sizeY)>h[0]) {
@@ -754,6 +758,12 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList)
 				}
 				thisTile = ImagenomicAnalytics::WholeSlideProcessing::extractTileFromWSI<char>(osr, levelOfLargestSize, 
 							topLeftX, topLeftY, sizeX, sizeY);
+
+				if (thisTile.empty()) { // Error when extracting the region
+					std::cerr << "ERROR: Cannot extract the region from file: " << fileName << std::endl;
+					openslide_close(osr);
+					throw 1;
+				}
 
 				analysisParams.imgWidth  = w[0]; 
 				analysisParams.imgHeight = h[0]; 

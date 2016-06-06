@@ -180,7 +180,7 @@ namespace ImagenomicAnalytics
       openslide_read_region(osr, dest, topLeftX, topLeftY, level, sizeX, sizeY);
 
       // Check if any errors when extracting the region
-      uint32_t noneZero = 0;
+      uint32_t nonZero = 0;
       for (int64_t i=0;i<numOfPixelPerTile;i++)
     	  nonZero += dest[i];
       if (nonZero==0) { // Error extracting the region from the image

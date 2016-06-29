@@ -174,12 +174,22 @@ namespace ImagenomicAnalytics
                                int32_t level,                           \
                                int64_t topLeftX, int64_t topLeftY, int64_t sizeX, int64_t sizeY)
     {
-      cv::Mat thisTile(sizeY, sizeX, CV_8UC3, cv::Scalar(0, 0, 0)); // for cv mat is (height, width), so (y, x)
-
       int64_t numOfPixelPerTile = sizeY*sizeX;
 
       uint32_t* dest = new uint32_t[numOfPixelPerTile];
       openslide_read_region(osr, dest, topLeftX, topLeftY, level, sizeX, sizeY);
+
+      // Check if any errors when extracting the region
+      uint32_t nonZero = 0;
+      for (int64_t i=0;i<numOfPixelPerTile;i++)
+    	  nonZero += dest[i];
+      if (nonZero==0) { // Error extracting the region from the image
+    	  cv::Mat emptyTile;
+    	  delete[] dest;
+    	  return emptyTile;
+      }
+
+      cv::Mat thisTile(sizeY, sizeX, CV_8UC3, cv::Scalar(0, 0, 0)); // for cv mat is (height, width), so (y, x)
 
       for (int64_t it = 0; it < numOfPixelPerTile; ++it)
         {

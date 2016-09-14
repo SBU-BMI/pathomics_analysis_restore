@@ -926,6 +926,7 @@ int main(int argc, char **argv)
 
 	if (inpParams.inpType==WSI) {
 		segmentWSI(&inpParams);
+		compressTiles(&inpParams);
 	} else if (inpParams.inpType==IMG) {
 		segmentImg(&inpParams);
 	} else if (inpParams.inpType==TILES) {

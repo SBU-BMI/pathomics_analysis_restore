@@ -377,6 +377,9 @@ int segmentWSI(InputParameters *inpParams)
 		largestH = h[0];
 	}
 
+    std::cout<<"--------------------------------------------------------------------------------\n"<<largestW<<", "<<largestH<<"--------------------------------------------------------------------------------\n"<<std::endl<<std::flush;
+
+
 	std::vector<int64_t> tileTopleftX;
 	std::vector<int64_t> tileTopleftY;
 	std::vector<int64_t> tileSizeX;

@@ -251,7 +251,8 @@ namespace ImagenomicAnalytics
                                            float sizeUpperThld = 200,   \
                                            double mpp = 0.25,           \
                                            float msKernel = 20.0,       \
-                                           int levelsetNumberOfIteration = 100)
+                                           int levelsetNumberOfIteration = 100, \
+                                           bool doDeclump = false)
     {
       std::cout<<"normalizeImageColor.....\n"<<std::flush;
       cv::Mat newImgCV = normalizeImageColor<char>(thisTileCV);
@@ -317,30 +318,33 @@ namespace ImagenomicAnalytics
             }
         }
 
-      if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask))
+      if (doDeclump)
         {
-          gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
-          binaryMaskAnalyzer.setMaskImage( nucleusBinaryMask );
-          binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
-          binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
-          binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
-          binaryMaskAnalyzer.setMPP(mpp);
-          binaryMaskAnalyzer.update();
-
-          std::cout<<"after declumping\n"<<std::flush;
-
-          itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
-          itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(binaryMaskAnalyzer.getConnectedComponentLabelImage()));
-          itkUCharImageType::PixelType* edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
-
-          const itkUIntImageType::PixelType* outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
-
-          itkUCharImageType::PixelType* nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
-
-          for (long it = 0; it < numPixels; ++it)
+          if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask))
             {
-              nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1?1:0;
-              nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
+              gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
+              binaryMaskAnalyzer.setMaskImage( nucleusBinaryMask );
+              binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
+              binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
+              binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
+              binaryMaskAnalyzer.setMPP(mpp);
+              binaryMaskAnalyzer.update();
+
+              std::cout<<"after declumping\n"<<std::flush;
+
+              itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
+              itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(binaryMaskAnalyzer.getConnectedComponentLabelImage()));
+              itkUCharImageType::PixelType* edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
+
+              const itkUIntImageType::PixelType* outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
+
+              itkUCharImageType::PixelType* nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+
+              for (long it = 0; it < numPixels; ++it)
+                {
+                  nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1?1:0;
+                  nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
+                }
             }
         }
 

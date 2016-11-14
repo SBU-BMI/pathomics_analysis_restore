@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 {
   if (argc < 4)
     {
-      std::cerr<<"Parameters: imageName outputPrefix tileSize otsuRatio\n";
+      std::cerr<<"Parameters: imageName outputPrefix tileSize otsuRatio [otsuRatio = 1.0] [curvatureWeight = 0.8] [sizeThld = 3] [sizeUpperThld = 200] [msKernel = 20.0] [doDeclump = 0]\n";
       exit(-1);
     }
 
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
     Higher value will cause smoother nucelear boundary.
 
     range: [0, 1]
-   --------------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------------*/
   double curvatureWeight = 0.8;
   if (argc > 5)
     {
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     removed.
 
     range > 0
-   --------------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------------*/
   float sizeThld = 3;
   if (argc > 6)
     {
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     de-clumped.
 
     range > 0
-   --------------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------------*/
   float sizeUpperThld = 200;
   if (argc > 7)
     {
@@ -107,6 +107,15 @@ int main(int argc, char **argv)
     {
       msKernel = atof(argv[8]);
     }
+
+  bool doDeclump = false;
+  if (argc > 9)
+    {
+      int tmp = atoi(argv[9]);
+      doDeclump = (tmp == 0?false:true);
+    }
+
+
 
 
   //--------------------------------------------------------------------------------
@@ -164,7 +173,7 @@ int main(int argc, char **argv)
       cv::Mat thisTile;
 #pragma omp critical
       {
-	thisTile = ImagenomicAnalytics::WholeSlideProcessing::extractTileFromWSI<char>(osr, levelOfLargestSize, topLeftX, topLeftY, sizeX, sizeY);
+        thisTile = ImagenomicAnalytics::WholeSlideProcessing::extractTileFromWSI<char>(osr, levelOfLargestSize, topLeftX, topLeftY, sizeX, sizeY);
       }
 
       itkRGBImageType::Pointer thisTileItk =  itk::OpenCVImageBridge::CVMatToITKImage< itkRGBImageType >( thisTile );
@@ -178,15 +187,16 @@ int main(int argc, char **argv)
 
       itkUShortImageType::Pointer outputLabelImageUShort = itkUShortImageType::New();
       itkUCharImageType::Pointer nucleusBinaryMask = ImagenomicAnalytics::TileAnalysis::processTile<char>(thisTile, outputLabelImageUShort, \
-                                                                                                          otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel);
+                                                                                                          otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, \
+                                                                                                          mpp, msKernel, doDeclump);
 
       // cv::Mat binary = itk::OpenCVImageBridge::ITKImageToCVMat< itkUCharImageType >( nucleusBinaryMask  );
       // cv::Mat outputLabelImageMat = itk::OpenCVImageBridge::ITKImageToCVMat< itkUShortImageType >( outputLabelImageUShort  );
 
-// #pragma omp critical
-//       {
-//         std::cout<<"done with processing\n"<<std::flush;
-//       }
+      // #pragma omp critical
+      //       {
+      //         std::cout<<"done with processing\n"<<std::flush;
+      //       }
 
 #pragma omp critical
       {

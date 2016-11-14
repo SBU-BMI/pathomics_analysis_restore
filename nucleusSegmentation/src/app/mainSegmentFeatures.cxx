@@ -932,12 +932,14 @@ int main(int argc, char **argv)
 		compressTiles(&inpParams);
 	} else if (inpParams.inpType==IMG) {
 		segmentImg(&inpParams);
+		compressTiles(&inpParams);
 	} else if (inpParams.inpType==TILES) {
 		std::vector<PatchList> patchListArray;
 		std::size_t patchArrayCount = readPatchList(&inpParams,patchListArray); 
 		if (patchArrayCount<=0) return 1;
 		for (int i=0;i<patchArrayCount;i++) 
 			segmentTiles(&inpParams,&patchListArray[i]);
+		compressTiles(&inpParams);
 	} else if (inpParams.inpType==ONETILE) {
 		PatchList patchList;
 		std::size_t patchCount = generatePatchList(&inpParams,patchList);

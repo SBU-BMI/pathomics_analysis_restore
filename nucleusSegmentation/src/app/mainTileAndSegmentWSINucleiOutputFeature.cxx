@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 {
   if (argc < 4)
     {
-      std::cerr<<"Parameters: imageName outputPrefix tileSize otsuRatio [otsuRatio = 1.0] [curvatureWeight = 0.8] [sizeThld = 3] [sizeUpperThld = 200] [msKernel = 20.0] [doDeclump = 0]\n";
+      std::cerr<<"Parameters: imageName outputPrefix tileSize [otsuRatio = 1.0] [curvatureWeight = 0.8] [sizeThld = 3] [sizeUpperThld = 200] [msKernel = 20.0] [doDeclump = 0]\n";
       exit(-1);
     }
 
@@ -120,9 +120,9 @@ int main(int argc, char **argv)
 
   //--------------------------------------------------------------------------------
   // Init output feature file
-  std::string outputFreatureName = outputPrefix + ".feature";
-  std::ofstream outputFreatureFile(outputFreatureName.c_str());
-  outputFreatureFile << "PolygonNo\tX\tY\tArea\tBoundaries" << endl;
+  std::string outputFeatureName = outputPrefix + ".feature";
+  std::ofstream outputFeatureFile(outputFeatureName.c_str());
+  outputFeatureFile << "PolygonNo\tX\tY\tArea\tBoundaries" << endl;
   //================================================================================
 
   openslide_t *osr = openslide_open(fileName);
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
 
     }
 
-  outputFreatureFile.close();
+  outputFeatureFile.close();
 
   return 0;
 }

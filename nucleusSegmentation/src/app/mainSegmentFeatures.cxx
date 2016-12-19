@@ -557,7 +557,6 @@ int segmentImg(InputParameters *inpParams) {
     ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
     featureAnalyzer.setInputRGBImage(thisTileItk);
     featureAnalyzer.setObjectBinaryMask(nucleusBinaryMask);
-    //featureAnalyzer.setTopLeft(0, 0);
     featureAnalyzer.setTopLeft(analysisParams.patchMinX, analysisParams.patchMinY);
     featureAnalyzer.update();
 

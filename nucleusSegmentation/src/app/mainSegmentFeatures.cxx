@@ -352,6 +352,12 @@ inline std::string getRandomIDString() {
     return ss.str();
 }
 
+/**
+ * For a given WSI, extract tiles and process them.
+ *
+ * @param inpParams
+ * @return
+ */
 int segmentWSI(InputParameters *inpParams) {
     openslide_t *osr = openslide_open(inpParams->inpFile.c_str());
     if (osr == NULL) return 1;
@@ -490,14 +496,23 @@ int segmentWSI(InputParameters *inpParams) {
     return 0;
 }
 
+/**
+ * Process a standalone image (ie. a tile in JPG, PNG, or TIFF format).
+ *
+ * @param inpParams
+ * @return
+ */
 int segmentImg(InputParameters *inpParams) {
     const int ImageDimension = 2;
 
     AnalysisParameters analysisParams;
     captureAnalysisParameters(&analysisParams, inpParams);
 
+    // Read image using OpenCV.
     cv::Mat thisTile = imread(inpParams->inpFile.c_str());
+    // Convert image to ITK image.
     itkRGBImageType::Pointer thisTileItk = itk::OpenCVImageBridge::CVMatToITKImage<itkRGBImageType>(thisTile);
+
     analysisParams.imgWidth = (int64_t) thisTile.cols;
     analysisParams.imgHeight = (int64_t) thisTile.rows;
     analysisParams.mpp = inpParams->mpp;
@@ -557,6 +572,7 @@ int segmentImg(InputParameters *inpParams) {
     ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
     featureAnalyzer.setInputRGBImage(thisTileItk);
     featureAnalyzer.setObjectBinaryMask(nucleusBinaryMask);
+    //featureAnalyzer.setTopLeft(0, 0);
     featureAnalyzer.setTopLeft(analysisParams.patchMinX, analysisParams.patchMinY);
     featureAnalyzer.update();
 
@@ -712,6 +728,13 @@ int compressTiles(InputParameters *inpParams) {
     return system(cmd.c_str());
 }
 
+/**
+ * Process a list of tiles for a given WSI.
+ *
+ * @param inpParams
+ * @param patchList
+ * @return
+ */
 int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
 
 #pragma omp parallel for

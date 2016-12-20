@@ -6,6 +6,18 @@
 #include "itkBinaryFillholeImageFilter.h"
 #include "itkGradientMagnitudeImageFilter.h"
 #include "itkConnectedComponentImageFilter.h"
+#include "itkLiThresholdImageFilter.h"
+#include "itkHuangThresholdImageFilter.h"
+//#include "itkIntermodesThresholdImageFilter.h"
+#include "itkIsoDataThresholdImageFilter.h"
+//#include "itkKittlerIllingworthThresholdImageFilter.h"
+#include "itkMaximumEntropyThresholdImageFilter.h"
+#include "itkMomentsThresholdImageFilter.h"
+#include "itkOtsuThresholdImageFilter.h"
+#include "itkRenyiEntropyThresholdImageFilter.h"
+#include "itkShanbhagThresholdImageFilter.h"
+#include "itkTriangleThresholdImageFilter.h"
+#include "itkYenThresholdImageFilter.h"
 
 #include "Normalization.h"
 #include "BinaryMaskAnalysisFilter.h"
@@ -242,6 +254,143 @@ namespace ImagenomicAnalytics
     }
 
 
+
+    template<typename InputImageType>
+    std::vector<typename InputImageType::PixelType>
+    computeMultipleThresholdsForGrayScaleImage(typename InputImageType::Pointer inputImage)
+    {
+      typedef typename InputImageType::PixelType PixelType;
+      std::vector<PixelType> multipleThresholds;
+
+      {
+        typedef itk::HuangThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+        typename CalculatorType::Pointer calculator = CalculatorType::New();
+        calculator->SetInput(inputImage);
+        calculator->Update();
+        multipleThresholds.push_back(calculator->GetThreshold());
+      }
+
+      /* { */
+      /*   typedef itk::IntermodesThresholdImageFilter<InputImageType, InputImageType> CalculatorType; */
+      /*   typename CalculatorType::Pointer calculator = CalculatorType::New(); */
+      /*   calculator->SetInput(inputImage); */
+      /*   calculator->Update(); */
+      /*   multipleThresholds.push_back(calculator->GetThreshold()); */
+      /* } */
+
+      {
+        typedef itk::IsoDataThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+        typename CalculatorType::Pointer calculator = CalculatorType::New();
+        calculator->SetInput(inputImage);
+        calculator->Update();
+        multipleThresholds.push_back(calculator->GetThreshold());
+      }
+
+      /* { */
+      /*   typedef itk::KittlerIllingworthThresholdImageFilter<InputImageType, InputImageType> CalculatorType; */
+      /*   typename CalculatorType::Pointer calculator = CalculatorType::New(); */
+      /*   calculator->SetInput(inputImage); */
+      /*   calculator->Update(); */
+      /*   multipleThresholds.push_back(calculator->GetThreshold()); */
+      /* } */
+
+      {
+        typedef itk::LiThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+        typename CalculatorType::Pointer calculator = CalculatorType::New();
+        calculator->SetInput(inputImage);
+        calculator->Update();
+        multipleThresholds.push_back(calculator->GetThreshold());
+      }
+
+      {
+        typedef itk::MaximumEntropyThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+        typename CalculatorType::Pointer calculator = CalculatorType::New();
+        calculator->SetInput(inputImage);
+        calculator->Update();
+        multipleThresholds.push_back(calculator->GetThreshold());
+      }
+
+      {
+        typedef itk::MomentsThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+        typename CalculatorType::Pointer calculator = CalculatorType::New();
+        calculator->SetInput(inputImage);
+        calculator->Update();
+        multipleThresholds.push_back(calculator->GetThreshold());
+      }
+
+      {
+        typedef itk::OtsuThresholdImageFilter<InputImageType, InputImageType, InputImageType> CalculatorType;
+        typename CalculatorType::Pointer calculator = CalculatorType::New();
+        calculator->SetInput(inputImage);
+        calculator->Update();
+        multipleThresholds.push_back(calculator->GetThreshold());
+      }
+
+      {
+        typedef itk::RenyiEntropyThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+        typename CalculatorType::Pointer calculator = CalculatorType::New();
+        calculator->SetInput(inputImage);
+        calculator->Update();
+        multipleThresholds.push_back(calculator->GetThreshold());
+      }
+
+      {
+        typedef itk::ShanbhagThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+        typename CalculatorType::Pointer calculator = CalculatorType::New();
+        calculator->SetInput(inputImage);
+        calculator->Update();
+        multipleThresholds.push_back(calculator->GetThreshold());
+      }
+
+      {
+        typedef itk::TriangleThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+        typename CalculatorType::Pointer calculator = CalculatorType::New();
+        calculator->SetInput(inputImage);
+        calculator->Update();
+        multipleThresholds.push_back(calculator->GetThreshold());
+      }
+
+      {
+        typedef itk::YenThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+        typename CalculatorType::Pointer calculator = CalculatorType::New();
+        calculator->SetInput(inputImage);
+        calculator->Update();
+        multipleThresholds.push_back(calculator->GetThreshold());
+      }
+
+      return multipleThresholds;
+    }
+
+
+    template<typename InputImageType, typename OutputImageType>
+    typename OutputImageType::Pointer
+    optimalThresholdImage(typename InputImageType::Pointer inputImage, typename OutputImageType::PixelType maskValue, float& theThreshold)
+    {
+      itkFloatImageType::Pointer image = ScalarImage::castItkImage<InputImageType, itkFloatImageType>( inputImage );
+
+      std::vector<itkFloatImageType::PixelType> a = computeMultipleThresholdsForGrayScaleImage<itkFloatImageType>(image);
+      std::sort(a.begin(), a.end());
+
+      float ratio = 0.75;
+      long n = static_cast<long>(ratio*static_cast<float>(a.size()));
+
+      theThreshold = a[n];
+
+      typename OutputImageType::Pointer mask = OutputImageType::New();
+      mask->SetRegions(image->GetLargestPossibleRegion() );
+      mask->Allocate();
+      mask->FillBuffer(0);
+      const itkFloatImageType::PixelType* imageBufferPointer = image->GetBufferPointer();
+      typename OutputImageType::PixelType* maskBufferPointer = mask->GetBufferPointer();
+      std::size_t numPixels = mask->GetLargestPossibleRegion().GetNumberOfPixels();
+      for (std::size_t it = 0; it < numPixels; ++it)
+        {
+          maskBufferPointer[it] = imageBufferPointer[it]<=theThreshold?maskValue:0;
+        }
+
+      return mask;
+    }
+
     template< typename TNull >
     itkUCharImageType::Pointer processTile(cv::Mat thisTileCV,          \
                                            itkUShortImageType::Pointer& outputLabelImageUShort, \
@@ -271,8 +420,10 @@ namespace ImagenomicAnalytics
 
       itkFloatImageType::Pointer hemaFloat = ScalarImage::castItkImage<itkUCharImageType, itkFloatImageType>(hematoxylinImage);
 
-      std::cout<<"otsuThresholdImage.....\n"<<std::flush;
+      std::cout<<"ThresholdImage.....\n"<<std::flush;
+
       itkUCharImageType::Pointer nucleusBinaryMask = ScalarImage::otsuThresholdImage<char>(hemaFloat, maskValue, otsuRatio);
+
       long numPixels = nucleusBinaryMask->GetLargestPossibleRegion().GetNumberOfPixels();
 
       //std::cout<<"output otsuThresholdImage.....\n"<<std::flush;
@@ -379,6 +530,146 @@ namespace ImagenomicAnalytics
 
       return nucleusBinaryMask;
     }
+
+
+    template< typename TNull >
+    itkUCharImageType::Pointer processTileOptimalThreshold(cv::Mat thisTileCV,          \
+                                                           itkUShortImageType::Pointer& outputLabelImageUShort, \
+                                                           double curvatureWeight = 0.8, \
+                                                           float sizeThld = 3,          \
+                                                           float sizeUpperThld = 200,   \
+                                                           double mpp = 0.25,           \
+                                                           float msKernel = 20.0,       \
+                                                           int levelsetNumberOfIteration = 100, \
+                                                           bool doDeclump = false)
+    {
+      std::cout<<"normalizeImageColor.....\n"<<std::flush;
+      cv::Mat newImgCV = normalizeImageColor<char>(thisTileCV);
+
+      std::cout<<"extractTissueMask.....\n"<<std::flush;
+      itkUCharImageType::Pointer foregroundMask = extractTissueMask<char>(newImgCV);
+
+      itkRGBImageType::Pointer thisTile = itk::OpenCVImageBridge::CVMatToITKImage< itkRGBImageType >( thisTileCV );
+
+      //IO::writeImage<itkRGBImageType>(thisTile, "thisTile.png", 0);
+
+      std::cout<<"ExtractHematoxylinChannel.....\n"<<std::flush;
+      itkUCharImageType::Pointer hematoxylinImage = ExtractHematoxylinChannel<char>(thisTile);
+
+      short maskValue = 1;
+
+      itkFloatImageType::Pointer hemaFloat = ScalarImage::castItkImage<itkUCharImageType, itkFloatImageType>(hematoxylinImage);
+
+      std::cout<<"ThresholdImage.....\n"<<std::flush;
+
+      float theThreshold = 0;
+      itkUCharImageType::Pointer nucleusBinaryMask			\
+        = optimalThresholdImage<itkFloatImageType, itkUCharImageType>(hemaFloat, static_cast<itkUCharImageType::PixelType>(maskValue), theThreshold);
+
+      long numPixels = nucleusBinaryMask->GetLargestPossibleRegion().GetNumberOfPixels();
+
+      if (foregroundMask)
+        {
+          const itkUCharImageType::PixelType* fgMaskBufferPointer = foregroundMask->GetBufferPointer();
+          itkBinaryMaskImageType::PixelType* nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+
+          for (long it = 0; it < numPixels; ++it)
+            {
+              if (0 == fgMaskBufferPointer[it])
+                {
+                  // for sure glass region
+                  nucleusBinaryMaskBufferPointer[it] = 0;
+                }
+            }
+        }
+
+      if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask))
+        {
+          std::cout<<"before CV\n"<<std::flush;
+
+          //int numiter = 100;
+          CSFLSLocalChanVeseSegmentor2D< itkFloatImageType::PixelType > cv;
+          cv.setImage(hemaFloat);
+          cv.setMask( nucleusBinaryMask );
+          cv.setNumIter(levelsetNumberOfIteration);
+          cv.setCurvatureWeight(curvatureWeight);
+          cv.doSegmenation();
+
+          std::cout<<"after CV\n"<<std::flush;
+
+          CSFLSLocalChanVeseSegmentor2D< itkFloatImageType::PixelType >::LSImageType::Pointer phi = cv.mp_phi;
+
+          itkUCharImageType::PixelType* nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+          CSFLSLocalChanVeseSegmentor2D< itkFloatImageType::PixelType >::LSImageType::PixelType* phiBufferPointer = phi->GetBufferPointer();
+
+          for (long it = 0; it < numPixels; ++it)
+            {
+              nucleusBinaryMaskBufferPointer[it] = phiBufferPointer[it]<=1.0?1:0;
+            }
+        }
+
+      if (doDeclump)
+        {
+          if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask))
+            {
+              gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
+              binaryMaskAnalyzer.setMaskImage( nucleusBinaryMask );
+              binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
+              binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
+              binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
+              binaryMaskAnalyzer.setMPP(mpp);
+              binaryMaskAnalyzer.update();
+
+              std::cout<<"after declumping\n"<<std::flush;
+
+              itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
+              itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(binaryMaskAnalyzer.getConnectedComponentLabelImage()));
+              itkUCharImageType::PixelType* edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
+
+              const itkUIntImageType::PixelType* outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
+
+              itkUCharImageType::PixelType* nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+
+              for (long it = 0; it < numPixels; ++it)
+                {
+                  nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1?1:0;
+                  nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
+                }
+            }
+        }
+
+
+      if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask))
+        {
+          int numiter = 50;
+          CSFLSLocalChanVeseSegmentor2D< itkFloatImageType::PixelType > cv;
+          cv.setImage(hemaFloat);
+          cv.setMask( nucleusBinaryMask );
+          cv.setNumIter(numiter);
+          cv.setCurvatureWeight(curvatureWeight);
+          cv.doSegmenation();
+
+          CSFLSLocalChanVeseSegmentor2D< itkFloatImageType::PixelType >::LSImageType::Pointer phi = cv.mp_phi;
+
+          itkUCharImageType::PixelType* nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+          CSFLSLocalChanVeseSegmentor2D< itkFloatImageType::PixelType >::LSImageType::PixelType* phiBufferPointer = phi->GetBufferPointer();
+
+          for (long it = 0; it < numPixels; ++it)
+            {
+              nucleusBinaryMaskBufferPointer[it] = phiBufferPointer[it]<=1.0?1:0;
+            }
+        }
+
+      typedef itk::ConnectedComponentImageFilter <itkUCharImageType, itkUShortImageType > ConnectedComponentImageFilterType;
+      ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New ();
+      connected->SetInput(nucleusBinaryMask);
+      connected->Update();
+
+      outputLabelImageUShort = connected->GetOutput();
+
+      return nucleusBinaryMask;
+    }
+
 
 
     template< typename TNull >

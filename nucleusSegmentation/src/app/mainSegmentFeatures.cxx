@@ -531,8 +531,8 @@ int segmentImg(InputParameters *inpParams) {
                   << "." << inpParams->caseId
                   << "." << getRandomIDString()
                   << "_mpp_" << inpParams->mpp
-                  << "_x" << 0
-                  << "_y" << 0;
+                  << "_x" << analysisParams.tileMinX
+                  << "_y" << analysisParams.tileMinY;
     outPathPrefix << inpParams->outFolder
                   << "/"
                   << outFilePrefix.str();

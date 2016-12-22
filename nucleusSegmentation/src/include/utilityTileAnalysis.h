@@ -528,13 +528,13 @@ namespace ImagenomicAnalytics
             }
         }
 
-      std::cout << "before ConnectedComponent\n" << std::flush;
-      typedef itk::ConnectedComponentImageFilter <itkUCharImageType, itkUShortImageType > ConnectedComponentImageFilterType;
-      ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New ();
-      connected->SetInput(nucleusBinaryMask);
-      connected->Update();
-      outputLabelImageUShort = connected->GetOutput();
-      std::cout << "after ConnectedComponent\n" << std::flush;
+      //std::cout << "before ConnectedComponent\n" << std::flush;
+      //typedef itk::ConnectedComponentImageFilter <itkUCharImageType, itkUShortImageType > ConnectedComponentImageFilterType;
+      //ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New ();
+      //connected->SetInput(nucleusBinaryMask);
+      //connected->Update();
+      //outputLabelImageUShort = connected->GetOutput();
+      //std::cout << "after ConnectedComponent\n" << std::flush;
 
       return nucleusBinaryMask;
     }

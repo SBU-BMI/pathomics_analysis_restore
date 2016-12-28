@@ -673,12 +673,13 @@ namespace ImagenomicAnalytics
             }
         }
 
+      std::cout << "before ConnectedComponent\n" << std::flush;
       typedef itk::ConnectedComponentImageFilter <itkUCharImageType, itkUShortImageType > ConnectedComponentImageFilterType;
       ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New ();
       connected->SetInput(nucleusBinaryMask);
       connected->Update();
-
       outputLabelImageUShort = connected->GetOutput();
+      std::cout << "after ConnectedComponent\n" << std::flush;
 
       return nucleusBinaryMask;
     }
@@ -740,12 +741,17 @@ namespace ImagenomicAnalytics
           std::cout<<"before CV\n"<<std::flush;
 
           //int numiter = 100;
+          time_t start, end;
+          time(&start);
           CSFLSLocalChanVeseSegmentor2D< itkFloatImageType::PixelType > cv;
           cv.setImage(hemaFloat);
           cv.setMask( nucleusBinaryMask );
           cv.setNumIter(levelsetNumberOfIteration);
           cv.setCurvatureWeight(curvatureWeight);
           cv.doSegmenation();
+          time(&end);
+          double dif = difftime(end, start);
+          printf("Elasped time is %.2lf seconds.\n", dif);
 
           std::cout<<"after CV\n"<<std::flush;
 

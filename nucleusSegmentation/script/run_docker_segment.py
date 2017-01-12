@@ -21,7 +21,7 @@ def print_help_start():
     print '    <docker image> - optional name of the docker image to start.   '
 
 def print_help_remove():
-    print 'run_docker_segment remove <docker name> ' 
+    print 'run_docker_segment remove <docker name> '
     print '    <docker name> - unique name for the docker container that was '
     print '                    provided with the start command. '
     print '    Running docker container instance will be killed and removed. '
@@ -69,7 +69,7 @@ def run_start(argv):
         run_cmd = "docker run --name " + argv[0] + " -it -d " + argv[1] + " /bin/bash"
     else:
         run_cmd = "docker run --name " + argv[0] + " -it -d sbubmi/pathomics_nucleus:1.0 /bin/bash"
-    print "Starting docker container." 
+    print "Starting docker container."
     subprocess.call(run_cmd,shell=True)
     print "Use docker name: " + argv[0] + " in commands segment and remove."
 
@@ -122,15 +122,15 @@ def run_segment(argv,docker_name,inp_file,zip_file):
     random.seed()
     rnd_val = random.randrange(1000000)
     tmp_input  = "/tmp/input"  + `rnd_val`
-    tmp_output = "/tmp/input"  + `rnd_val`
+    tmp_output = "/tmp/output"  + `rnd_val`
     tmp_zip    = "/tmp/zip" + `rnd_val`
-    run_cmd = "docker exec " + docker_name + " mkdir -p " + tmp_input 
+    run_cmd = "docker exec " + docker_name + " mkdir -p " + tmp_input
     print run_cmd
     subprocess.call(run_cmd,shell=True)
-    run_cmd = "docker exec " + docker_name + " mkdir -p " + tmp_output 
+    run_cmd = "docker exec " + docker_name + " mkdir -p " + tmp_output
     print run_cmd
     subprocess.call(run_cmd,shell=True)
-    run_cmd = "docker exec " + docker_name + " mkdir -p " + tmp_zip 
+    run_cmd = "docker exec " + docker_name + " mkdir -p " + tmp_zip
     print run_cmd
     subprocess.call(run_cmd,shell=True)
     run_cmd = "docker cp " + inp_file + " " + docker_name + ":" + tmp_input + "/."
@@ -154,15 +154,15 @@ def run_segment(argv,docker_name,inp_file,zip_file):
     run_cmd = "docker cp " + docker_name + ":" + tmp_zip + "/" + zip_file_base + " " + zip_file
     print run_cmd
     subprocess.call(run_cmd,shell=True)
-    
+
     print "Cleaning up temp folders in the docker container."
-    run_cmd = "docker exec " + docker_name + " rm -rf " + tmp_output  
+    run_cmd = "docker exec " + docker_name + " rm -rf " + tmp_output
     print run_cmd
     subprocess.call(run_cmd,shell=True)
-    run_cmd = "docker exec " + docker_name + " rm -rf " + tmp_input  
+    run_cmd = "docker exec " + docker_name + " rm -rf " + tmp_input
     print run_cmd
     subprocess.call(run_cmd,shell=True)
-    run_cmd = "docker exec " + docker_name + " rm -rf " + tmp_zip  
+    run_cmd = "docker exec " + docker_name + " rm -rf " + tmp_zip
     print run_cmd
     subprocess.call(run_cmd,shell=True)
 

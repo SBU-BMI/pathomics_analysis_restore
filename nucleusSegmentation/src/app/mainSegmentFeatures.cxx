@@ -656,34 +656,34 @@ std::size_t readPatchList(InputParameters *inpParams, std::vector<PatchList> &pa
 
         // subjectId
         if (!(std::getline(ss, tmpParams.subjectId, ','))) {
-            std::cerr << "Error readling the tile list file: Missing subjectId column at line: "
+            std::cerr << "Error reading the tile list file: Missing subjectId column at line: "
                       << lineNum << std::endl;
             return 0;
         }
 
         // caseId
         if (!(std::getline(ss, tmpParams.caseId, ','))) {
-            std::cerr << "Error readling the tile list file: Missing caseId column at line: "
+            std::cerr << "Error reading the tile list file: Missing caseId column at line: "
                       << lineNum << std::endl;
             return 0;
         }
 
         // Output folder
         if (!(std::getline(ss, tmpParams.outFolder, ','))) {
-            std::cerr << "Error readling the tile list file: Missing output folder column at line: "
+            std::cerr << "Error reading the tile list file: Missing output folder column at line: "
                       << lineNum << std::endl;
             return 0;
         }
 
         // top left X,Y
         if (!(std::getline(ss, token, ','))) {
-            std::cerr << "Error readling the tile list file: Missing top left X column at line: "
+            std::cerr << "Error reading the tile list file: Missing top left X column at line: "
                       << lineNum << std::endl;
             return 0;
         }
         tmpParams.topLeftX = atoi(token.c_str());
         if (!(std::getline(ss, token, ','))) {
-            std::cerr << "Error readling the tile list file: Missing top left Y column at line: "
+            std::cerr << "Error reading the tile list file: Missing top left Y column at line: "
                       << lineNum << std::endl;
             return 0;
         }
@@ -691,13 +691,13 @@ std::size_t readPatchList(InputParameters *inpParams, std::vector<PatchList> &pa
 
         // width and height
         if (!(std::getline(ss, token, ','))) {
-            std::cerr << "Error readling the tile list file: Missing width (sizeX) column at line: "
+            std::cerr << "Error reading the tile list file: Missing width (sizeX) column at line: "
                       << lineNum << std::endl;
             return 0;
         }
         tmpParams.sizeX = atoi(token.c_str());
         if (!(std::getline(ss, token, ','))) {
-            std::cerr << "Error readling the tile list file: Missing height (sizeY) column at line: "
+            std::cerr << "Error reading the tile list file: Missing height (sizeY) column at line: "
                       << lineNum << std::endl;
             return 0;
         }

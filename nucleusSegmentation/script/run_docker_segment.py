@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 import sys
 import os
@@ -36,6 +36,7 @@ def print_help_segment():
     print '    <image file>  - input whole tissue image file. '
     print '    <zip file>    - zip file that will store the result files. '
     print '    Required arguments: '
+    print '          -t [img|onetile]'
     print '          -s <tile_minx,tile_miny> '
     print '          -b <tile_width,tile_height> '
     print '          -d <patch_width,patch_height> '
@@ -48,6 +49,7 @@ def print_help_segment():
     print '          -l <sizeLowerThld> '
     print '          -u <sizeUpperThld> '
     print '          -k <msKernel> '
+    print '          -j <doDeclump: Y or N> '
     print '          -n <levelsetNumberOfIterations> '
     print '          -m <mpp> '
     print '          -e <analysis desc: string> '
@@ -74,7 +76,8 @@ def run_start(argv):
     if len(argv) > 1:
         run_cmd = "docker run --name " + argv[0] + " -it -d " + argv[1] + " /bin/bash"
     else:
-        run_cmd = "docker run --name " + argv[0] + " -it -d sbubmi/pathomics_nucleus:1.0 /bin/bash"
+        run_cmd = "docker run --name " + argv[0] + " -it -d sbubmi/test_segmentation:latest /bin/bash"
+    print run_cmd
     print "Starting docker container."
     subprocess.call(run_cmd, shell=True)
     print "Use docker name: " + argv[0] + " in commands segment and remove."
@@ -89,7 +92,7 @@ def run_remove(docker_name):
 
 def run_segment(argv, docker_name, inp_file, zip_file):
     try:
-        opts, args = getopt.getopt(argv, "s:b:d:a:c:p:r:w:l:u:k:n:m:e:v")
+        opts, args = getopt.getopt(argv, "t:s:b:d:a:c:p:r:w:l:u:k:j:n:m:e:v")
     except getopt.GetoptError:
         print_help_segment()
         sys.exit(2)
@@ -100,6 +103,7 @@ def run_segment(argv, docker_name, inp_file, zip_file):
     a_option = 0
     c_option = 0
     p_option = 0
+    t_option = 0
     for opt, arg in opts:
         if opt in "-s":
             s_option = 1
@@ -113,9 +117,11 @@ def run_segment(argv, docker_name, inp_file, zip_file):
             c_option = 1
         if opt in "-p":
             p_option = 1
+        if opt in "-t":
+            t_option = 1
     all_option = s_option & b_option
     all_option &= d_option & a_option
-    all_option &= c_option & p_option
+    all_option &= c_option & p_option & t_option
     if all_option != 1:
         print_help_segment()
         sys.exit(2)
@@ -146,7 +152,7 @@ def run_segment(argv, docker_name, inp_file, zip_file):
     subprocess.call(run_cmd, shell=True)
 
     print "Running the analysis pipeline."
-    run_cmd = "mainSegmentFeatures -t onetile -o " + tmp_output
+    run_cmd = "mainSegmentFeatures -o " + tmp_output
     run_cmd = run_cmd + " -i " + tmp_input + "/" + inp_file_base
     run_cmd = run_cmd + " -z " + tmp_zip + "/" + zip_file_base
     i = 0

@@ -19,6 +19,7 @@
 #define MASK_ONLY        1
 #define MASK_IMG         2
 #define MASK_IMG_OVERLAY 3
+
 typedef struct _InputParameters {
     int inpType;  // wsi (0)|tile|img
     float otsuRatio;
@@ -26,6 +27,7 @@ typedef struct _InputParameters {
     float sizeLowerThld;
     float sizeUpperThld;
     float msKernel;
+    bool doDeclump;
     int64_t levelsetNumberOfIteration;
     int64_t topLeftX, topLeftY;
     int64_t sizeX, sizeY;

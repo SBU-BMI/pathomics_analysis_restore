@@ -7,6 +7,7 @@
 #include "InputParameters.h"
 
 void printParseError(char *argv[]) {
+
     std::cerr << "Usage: " << argv[0] << " -h|[parameters]" << std::endl
               << "  Required arguments: " << std::endl
               << "   -t [onetile|tiles] " << std::endl
@@ -24,11 +25,14 @@ void printParseError(char *argv[]) {
               << "   -l <sizeLowerThld>" << std::endl
               << "   -u <sizeUpperThld>" << std::endl
               << "   -k <msKernel>" << std::endl
+              << "   -j <doDeclump: Y or N>" << std::endl
               << "   -n <levelsetNumberOfIterations>" << std::endl
               << "   -m <mpp>" << std::endl
               << "   -e <analysis desc: string>" << std::endl
               << "   -z <zipFile - compression works with onetile only.>" << std::endl
               << "   -v <output level: mask|mask:img|mask:img:overlay>" << std::endl;
+
+    // alphabet letters remaining: f g h q x y
 }
 
 void printInputParameters(InputParameters *inpParams) {
@@ -55,6 +59,7 @@ void printInputParameters(InputParameters *inpParams) {
     std::cout << "min_size: " << inpParams->sizeLowerThld << std::endl;
     std::cout << "max_size: " << inpParams->sizeUpperThld << std::endl;
     std::cout << "ms_kernel: " << inpParams->msKernel << std::endl;
+    std::cout << "doDeclump: " << inpParams->doDeclump << std::endl;
     std::cout << "levelset_num_iters: " << inpParams->levelsetNumberOfIteration << std::endl;
     std::cout << "tile_minx: " << inpParams->topLeftX << " tile_miny: " << inpParams->topLeftY << std::endl;
     std::cout << "tile_width: " << inpParams->sizeX << " tile_height: " << inpParams->sizeY << std::endl;
@@ -94,6 +99,7 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams) {
     inpParams->sizeLowerThld = 3.0;
     inpParams->sizeUpperThld = 200.0;
     inpParams->msKernel = 20.0;
+    inpParams->doDeclump = false;
     inpParams->levelsetNumberOfIteration = 100;
     inpParams->topLeftX = 0;
     inpParams->topLeftY = 0;
@@ -118,7 +124,7 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams) {
     int a_required = 0;
     int c_required = 0;
     int p_required = 0;
-    while ((c = getopt(argc, argv, "ht:i:o:m:r:w:l:u:k:n:s:b:d:v:a:e:c:p:z:")) != -1) {
+    while ((c = getopt(argc, argv, "ht:i:o:m:r:w:l:u:k:j:n:s:b:d:v:a:e:c:p:z:")) != -1) {
         switch (c) {
             case 'h':
                 return 1;
@@ -183,6 +189,14 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams) {
             case 'k':
                 inpParams->msKernel = atof(optarg);
                 break;
+            case 'j': {
+                if (!strcmp(optarg, "Y")) {
+                    inpParams -> doDeclump = true;
+                } else {
+                    inpParams -> doDeclump = false;
+                }
+                break;
+            }
             case 'n':
                 inpParams->levelsetNumberOfIteration = (int64_t) atoi(optarg);
                 break;
@@ -301,4 +315,3 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams) {
 
     return 0;
 }
-

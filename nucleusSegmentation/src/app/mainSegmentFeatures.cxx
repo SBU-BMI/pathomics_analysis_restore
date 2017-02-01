@@ -40,13 +40,15 @@
 #include "MultipleObjectFeatureAnalysisFilter.h"
 
 #include "InputParameters.h"
+#include "ImageRegionNucleiData.h"
+#include "ConvertLabelToCvMat.h"
 
-const int _numOfFeatures = 25;
+const int _numOfFeatures = 21;
 const std::string _featureNames[] = {
-        "BoundingBoxTopLeftX",
-        "BoundingBoxTopLeftY",
-        "BoundingBoxBottomRightX",
-        "BoundingBoxBottomRightY",
+        // "BoundingBoxTopLeftX",
+        // "BoundingBoxTopLeftY",
+        // "BoundingBoxBottomRightX",
+        // "BoundingBoxBottomRightY",
         "SizeInPixels",
         "PhysicalSize",
         "NumberOfPixelsOnBorder",
@@ -312,6 +314,7 @@ int writeAnalysisParametersCSV(std::string outFilePrefix, AnalysisParameters *an
     return 0;
 }
 
+#if 0
 #define SKIP_BBOX 4 // do not output the bounding box info -- it is computed while loading to the database
 
 int writeFeatureCSV(std::string outFilePrefix, std::vector<std::vector<FeatureValueType> > &features) {
@@ -334,6 +337,59 @@ int writeFeatureCSV(std::string outFilePrefix, std::vector<std::vector<FeatureVa
         outputFeatureFile << features[iObject][iFeature] << "]" << std::endl << std::flush;
     }
     outputFeatureFile.close();
+}
+#endif
+
+int writeCombinedFeatureCSV(std::string outFilePrefix, InputParameters *inpParams, int64_t topLeftX, int64_t topLeftY,
+                            std::vector<std::string> &yiFeatureNames,
+                            std::vector<std::vector<FeatureValueType> > &yiFeatureValues,
+                            std::vector<std::string> &junFeatureNames,
+                            std::vector<std::vector<double> > &junFeatureValues)
+{
+  char outputFeatureName[1000];
+  sprintf(outputFeatureName, "%s-features.csv", outFilePrefix.c_str());
+  std::ofstream outputFeatureFile(outputFeatureName);
+
+  // write the header
+  int junFeaturesLength = junFeatureNames.size();
+  for (int i = 0; i < junFeaturesLength; i++)
+    {
+      outputFeatureFile << junFeatureNames[i] << ",";
+    }
+
+  int yiFeaturesLength = yiFeatureNames.size();
+  for (int i = 0; i < yiFeaturesLength - 1; i++)
+    {
+      outputFeatureFile << yiFeatureNames[i] << ",";
+    }
+  outputFeatureFile << yiFeatureNames[yiFeaturesLength - 1] << std::endl;
+
+  // write feature values. First, Jun's, then Yi's including Polygon data
+  // Format for each nucleus's feature is: 1,2,1.1,[polygonx1:polygony1:polygonx2:polygony2]
+  for (int i = 0; i < junFeatureValues.size(); i++)
+    {
+      // output Jun's features
+      for (int j = 0; j < junFeaturesLength; j++)
+        {
+          outputFeatureFile << junFeatureValues[i][j] << ",";
+        }
+
+      // output Yi's non-polygon features
+      for (int j = 0; j < yiFeaturesLength - 1; j++)
+        {
+          outputFeatureFile << yiFeatureValues[i][j] << ",";
+        }
+
+      // output Yi's polygon features
+      outputFeatureFile << "[";
+      for (std::size_t itPolygon = yiFeaturesLength - 1; itPolygon < yiFeatureValues[i].size() - 1; ++itPolygon)
+        {
+          outputFeatureFile << yiFeatureValues[i][itPolygon] << ":";
+        }
+      outputFeatureFile << yiFeatureValues[i][yiFeatureValues[i].size()-1] << "]\n";
+    }
+
+  outputFeatureFile.close();
 }
 
 #ifdef ADD_UUID
@@ -479,6 +535,8 @@ int segmentWSI(InputParameters *inpParams) {
             }
         }
 
+
+#if 0
         // Compute features
         ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
         featureAnalyzer.setInputRGBImage(thisTileItk);
@@ -487,12 +545,57 @@ int segmentWSI(InputParameters *inpParams) {
         featureAnalyzer.update();
 
         std::vector<std::vector<FeatureValueType> > features = featureAnalyzer.getFeatures();
+#endif
+
+#define yi_features
+#define jun_features
+#ifdef yi_features
+
+        itkLabelImageType::Pointer labelImage = ImagenomicAnalytics::ScalarImage::binaryImageToConnectedComponentLabelImage<char>(nucleusBinaryMask);
+
+        ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
+        featureAnalyzer.setInputRGBImage(thisTileItk);
+        featureAnalyzer.setObjectLabeledMask(labelImage);
+        featureAnalyzer.setTopLeft(analysisParams.patchMinX, analysisParams.patchMinY);
+        featureAnalyzer.setFeatureNames();
+        featureAnalyzer.update();
+
+        std::vector<std::vector<FeatureValueType> > yiFeatureValues = featureAnalyzer.getFeatures();
+        std::vector<std::string> yiFeatureNames = featureAnalyzer.getFeatureNames();
+
+#endif
+
+#ifdef jun_features
+
+        ImageRegionNucleiData nucleiData(0, 0, thisTile.cols - 1, thisTile.rows - 1);
+
+        Mat_<int> labeledMask = label2CvMat(labelImage);
+
+        nucleiData.extractBoundingBoxesFromLabeledMask(labeledMask);
+
+        if (yiFeatureValues.size() != nucleiData.getNumberOfNuclei()) {
+            fprintf(stderr, "the sizes of Yi's and Jun's feature sets do not match: %lu != %d\n", yiFeatureValues.size(), nucleiData.getNumberOfNuclei());
+            exit(-1);
+        }
+
+        cout << "COMP COUNT: " << nucleiData.getNumberOfNuclei() << endl;
+
+        if (nucleiData.getNumberOfNuclei() > 0) {
+            nucleiData.extractPolygonsFromLabeledMask(labeledMask);
+            nucleiData.extractCytoplasmRegions(labeledMask);
+            nucleiData.computeShapeFeatures(labeledMask);
+            nucleiData.computeRedBlueChannelTextureFeatures(thisTile, labeledMask);
+        }
+        std::vector<std::string> junFeatureNames = nucleiData.getFeatureNamesVector();
+        std::vector<std::vector<double> > junFeatureValues = nucleiData.getFeatureValuesVector();
+
+#endif
 
 #pragma omp critical
         {
-            writeFeatureCSV(outPathPrefix.str(), features);
-            writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
-            writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
+    		writeCombinedFeatureCSV(outPathPrefix.str(), inpParams, analysisParams.patchMinX, analysisParams.patchMinY, yiFeatureNames, yiFeatureValues, junFeatureNames, junFeatureValues);
+    		writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
+    		writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
         }
     }
 
@@ -575,6 +678,7 @@ int segmentImg(InputParameters *inpParams) {
         ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(overlay, oss.str().c_str(), 0);
     }
 
+#if 0
     // Compute features
     ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
     featureAnalyzer.setInputRGBImage(thisTileItk);
@@ -586,6 +690,55 @@ int segmentImg(InputParameters *inpParams) {
     std::vector<std::vector<FeatureValueType> > features = featureAnalyzer.getFeatures();
 
     writeFeatureCSV(outPathPrefix.str(), features);
+    writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
+    writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
+#endif
+
+#define yi_features
+#define jun_features
+#ifdef yi_features
+
+        itkLabelImageType::Pointer labelImage = ImagenomicAnalytics::ScalarImage::binaryImageToConnectedComponentLabelImage<char>(nucleusBinaryMask);
+
+        ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
+        featureAnalyzer.setInputRGBImage(thisTileItk);
+        featureAnalyzer.setObjectLabeledMask(labelImage);
+        featureAnalyzer.setTopLeft(analysisParams.patchMinX, analysisParams.patchMinY);
+        featureAnalyzer.setFeatureNames();
+        featureAnalyzer.update();
+
+        std::vector<std::vector<FeatureValueType> > yiFeatureValues = featureAnalyzer.getFeatures();
+        std::vector<std::string> yiFeatureNames = featureAnalyzer.getFeatureNames();
+
+#endif
+
+#ifdef jun_features
+
+        ImageRegionNucleiData nucleiData(0, 0, thisTile.cols - 1, thisTile.rows - 1);
+
+        Mat_<int> labeledMask = label2CvMat(labelImage);
+
+        nucleiData.extractBoundingBoxesFromLabeledMask(labeledMask);
+
+        if (yiFeatureValues.size() != nucleiData.getNumberOfNuclei()) {
+            fprintf(stderr, "the sizes of Yi's and Jun's feature sets do not match: %lu != %d\n", yiFeatureValues.size(), nucleiData.getNumberOfNuclei());
+            exit(-1);
+        }
+
+        cout << "COMP COUNT: " << nucleiData.getNumberOfNuclei() << endl;
+
+        if (nucleiData.getNumberOfNuclei() > 0) {
+            nucleiData.extractPolygonsFromLabeledMask(labeledMask);
+            nucleiData.extractCytoplasmRegions(labeledMask);
+            nucleiData.computeShapeFeatures(labeledMask);
+            nucleiData.computeRedBlueChannelTextureFeatures(thisTile, labeledMask);
+        }
+        std::vector<std::string> junFeatureNames = nucleiData.getFeatureNamesVector();
+        std::vector<std::vector<double> > junFeatureValues = nucleiData.getFeatureValuesVector();
+
+#endif
+
+    writeCombinedFeatureCSV(outPathPrefix.str(), inpParams, analysisParams.patchMinX, analysisParams.patchMinY, yiFeatureNames, yiFeatureValues, junFeatureNames, junFeatureValues);
     writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
     writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
 
@@ -858,6 +1011,7 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
                 }
             }
 
+#if 0
             // Compute features
             ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
             featureAnalyzer.setInputRGBImage(thisTileItk);
@@ -865,12 +1019,57 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
             featureAnalyzer.setTopLeft(topLeftX, topLeftY);
             featureAnalyzer.update();
             std::vector<std::vector<FeatureValueType> > features = featureAnalyzer.getFeatures();
+#endif
+
+#define yi_features
+#define jun_features
+#ifdef yi_features
+
+        itkLabelImageType::Pointer labelImage = ImagenomicAnalytics::ScalarImage::binaryImageToConnectedComponentLabelImage<char>(nucleusBinaryMask);
+
+        ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
+        featureAnalyzer.setInputRGBImage(thisTileItk);
+        featureAnalyzer.setObjectLabeledMask(labelImage);
+        featureAnalyzer.setTopLeft(analysisParams.patchMinX, analysisParams.patchMinY);
+        featureAnalyzer.setFeatureNames();
+        featureAnalyzer.update();
+
+        std::vector<std::vector<FeatureValueType> > yiFeatureValues = featureAnalyzer.getFeatures();
+        std::vector<std::string> yiFeatureNames = featureAnalyzer.getFeatureNames();
+
+#endif
+
+#ifdef jun_features
+
+        ImageRegionNucleiData nucleiData(0, 0, thisTile.cols - 1, thisTile.rows - 1);
+
+        Mat_<int> labeledMask = label2CvMat(labelImage);
+
+        nucleiData.extractBoundingBoxesFromLabeledMask(labeledMask);
+
+        if (yiFeatureValues.size() != nucleiData.getNumberOfNuclei()) {
+            fprintf(stderr, "the sizes of Yi's and Jun's feature sets do not match: %lu != %d\n", yiFeatureValues.size(), nucleiData.getNumberOfNuclei());
+            exit(-1);
+        }
+
+        cout << "COMP COUNT: " << nucleiData.getNumberOfNuclei() << endl;
+
+        if (nucleiData.getNumberOfNuclei() > 0) {
+            nucleiData.extractPolygonsFromLabeledMask(labeledMask);
+            nucleiData.extractCytoplasmRegions(labeledMask);
+            nucleiData.computeShapeFeatures(labeledMask);
+            nucleiData.computeRedBlueChannelTextureFeatures(thisTile, labeledMask);
+        }
+        std::vector<std::string> junFeatureNames = nucleiData.getFeatureNamesVector();
+        std::vector<std::vector<double> > junFeatureValues = nucleiData.getFeatureValuesVector();
+
+#endif
 
 #pragma omp critical
             {
-                writeFeatureCSV(outPathPrefix.str(), features);
-                writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
-                writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
+    			writeCombinedFeatureCSV(outPathPrefix.str(), inpParams, analysisParams.patchMinX, analysisParams.patchMinY, yiFeatureNames, yiFeatureValues, junFeatureNames, junFeatureValues);
+    			writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
+    			writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
             }
         }
     }

@@ -8,7 +8,7 @@
 #include "itkImage.h"
 #include "itkRGBPixel.h"
 #include "itkTypedefs.h"
-
+#include "SingleObjectFeatureAnalysisFilter.h"
 
 namespace ImagenomicAnalytics
 {
@@ -33,8 +33,25 @@ namespace ImagenomicAnalytics
     /// Input: Note that we Assume the spacing of both m_RGBImage and
     /// m_binaryObjectMask are correctly set to mpp
     void setInputRGBImage(itkRGBImageType::Pointer inputRGBImage) {m_RGBImage = inputRGBImage;}
-    void setObjectBinaryMask(itkBinaryMaskImageType::Pointer binaryObjectMask) {m_binaryObjectMask = binaryObjectMask;}
+    void setObjectBinaryMask(itkBinaryMaskImageType::Pointer binaryObjectMask) {
+			m_binaryObjectMask = binaryObjectMask;
+            m_labelComputed = 0;
+	}
     void setTopLeft(int64_t x, int64_t y) {m_TopLeftX = x; m_TopLeftY = y;}
+
+	void setObjectLabeledMask(itkLabelImageType::Pointer labeledMask) {
+            m_objectLabelImage = labeledMask;
+            m_labelComputed = 1;
+    }
+
+	void setFeatureNames() {
+         ImagenomicAnalytics::SingleObjectFeatureAnalysisFilter tmp;
+         featureNames = tmp.getFeatureNames();
+    }
+
+	std::vector <std::string> getFeatureNames() {
+            return featureNames;
+    }
 
     std::vector< std::vector<FeatureValueType> > getFeatures();
 
@@ -66,7 +83,10 @@ namespace ImagenomicAnalytics
     int64_t m_TopLeftX; // the x of the top left cornor of this tile in the WSI, in index (pixel) space
     int64_t m_TopLeftY;
     ///================================================================================
+    
+	int m_labelComputed;
 
+    std::vector <std::string> featureNames;
 
     ///--------------------------------------------------------------------------------
     /// Computed data

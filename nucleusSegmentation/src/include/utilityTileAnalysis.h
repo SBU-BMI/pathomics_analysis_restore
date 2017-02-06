@@ -2,6 +2,7 @@
 #define utilitiesTileAnalysis_h_
 
 // itk
+#include "itkOpenCVImageBridge.h"
 #include "itkTypedefs.h"
 #include "itkBinaryFillholeImageFilter.h"
 #include "itkGradientMagnitudeImageFilter.h"
@@ -831,7 +832,7 @@ namespace ImagenomicAnalytics
 
 
       cv::Mat binary = itk::OpenCVImageBridge::ITKImageToCVMat< itkUCharImageType >( nucleusBinaryMask  );
-      return binary;	
+      return binary;
 
     }
 

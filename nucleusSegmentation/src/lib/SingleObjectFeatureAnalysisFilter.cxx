@@ -90,10 +90,10 @@ namespace ImagenomicAnalytics
 
     //--------------------------------------------------------------------------------
     // These are computed by ITK Label Shape Filter
-    m_featureNames.push_back("BoundingBoxTopLeftX");
-    m_featureNames.push_back("BoundingBoxTopLeftY");
-    m_featureNames.push_back("BoundingBoxBottomRightX");
-    m_featureNames.push_back("BoundingBoxBottomRightY");
+    //m_featureNames.push_back("BoundingBoxTopLeftX");
+    //m_featureNames.push_back("BoundingBoxTopLeftY");
+    //m_featureNames.push_back("BoundingBoxBottomRightX");
+    //m_featureNames.push_back("BoundingBoxBottomRightY");
     m_featureNames.push_back("NumberOfPixels");
     m_featureNames.push_back("PhysicalSize");
     m_featureNames.push_back("NumberOfPixelsOnBorder");

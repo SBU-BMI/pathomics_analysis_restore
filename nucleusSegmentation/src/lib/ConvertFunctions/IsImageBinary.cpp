@@ -11,8 +11,6 @@
  *  ITK Example: Max/Min: itkStatisticsImageFilter
  *  https://itk.org/Wiki/ITK/Examples/Statistics/StatisticsImageFilter
  *
- *  @author Tammy D
- *
  *=========================================================================*/
 
 // LOCAL

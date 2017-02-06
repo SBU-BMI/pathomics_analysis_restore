@@ -12,8 +12,6 @@
  *  ITK Example: IO ReadUnknownImageType
  *  https://itk.org/Wiki/ITK/Examples/IO/ReadUnknownImageType
  *
- *  @author Tammy D
- *
  *=========================================================================*/
 
 // LOCAL

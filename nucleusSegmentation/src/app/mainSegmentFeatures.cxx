@@ -49,7 +49,7 @@ const std::string _featureNames[] = {
         // "BoundingBoxTopLeftY",
         // "BoundingBoxBottomRightX",
         // "BoundingBoxBottomRightY",
-        "SizeInPixels",
+        "NumberOfPixels",
         "PhysicalSize",
         "NumberOfPixelsOnBorder",
         "FeretDiameter",

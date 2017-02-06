@@ -3,8 +3,6 @@
  *  Purpose: Image pre-processing.
  *  Reads a 16-bit binary inputImage file and returns a itkLabelImageType.
  *
- *  @author Tammy D
- *
  *=========================================================================*/
 
 // LOCAL

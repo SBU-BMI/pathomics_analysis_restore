@@ -3,8 +3,6 @@
  *  Purpose: Image pre-processing.
  *  Reads an RGB image file and returns a itkLabelImageType.
  *
- *  @author Tammy D
- *
  *=========================================================================*/
 
 #include "itkImage.h"

@@ -1,7 +1,5 @@
 /**
  * Purpose: Convert ITK image to OpenCV image
- *
- * @author Tammy D
  */
 #include "itkImage.h"
 #include "itkImageFileReader.h"

@@ -218,10 +218,10 @@ namespace ImagenomicAnalytics
 
         //morphologyFeatures[featureIndex++] = labelObject->GetLabel();
 
-        morphologyFeatures.push_back(topLeftX);
-        morphologyFeatures.push_back(topLeftY);
-        morphologyFeatures.push_back(bottomRightX);
-        morphologyFeatures.push_back(bottomRightY);
+        //morphologyFeatures.push_back(topLeftX);
+        //morphologyFeatures.push_back(topLeftY);
+        //morphologyFeatures.push_back(bottomRightX);
+        //morphologyFeatures.push_back(bottomRightY);
         morphologyFeatures.push_back(labelObject->GetNumberOfPixels());
         morphologyFeatures.push_back(labelObject->GetPhysicalSize());
         morphologyFeatures.push_back(labelObject->GetNumberOfPixelsOnBorder());

@@ -3,8 +3,6 @@
  *  Purpose: Image pre-processing.
  *  Reads a binary image file and returns a itkLabelImageType.
  *
- *  @author Tammy D
- *
  *=========================================================================*/
 
 #include "BinaryMaskAnalysisFilter.h"

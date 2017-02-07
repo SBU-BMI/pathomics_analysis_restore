@@ -469,6 +469,19 @@ int segmentWSI(InputParameters *inpParams) {
 
         AnalysisParameters analysisParams;
         captureAnalysisParameters(&analysisParams, inpParams);
+
+        analysisParams.mpp = inpParams->mpp;
+        analysisParams.imgWidth = largestW;
+        analysisParams.imgHeight = largestH;
+        analysisParams.tileMinX = topLeftX;
+        analysisParams.tileMinY = topLeftY;
+        analysisParams.tileWidth = sizeX;
+        analysisParams.tileHeight = sizeY;
+        analysisParams.patchMinX = topLeftX;
+        analysisParams.patchMinY = topLeftY;
+        analysisParams.patchWidth = sizeX;
+        analysisParams.patchHeight = sizeY;
+
         std::stringstream outFilePrefix;
         std::stringstream outPathPrefix;
         outFilePrefix << inpParams->subjectId
@@ -482,17 +495,6 @@ int segmentWSI(InputParameters *inpParams) {
                       << outFilePrefix.str();
 
         analysisParams.outFilePrefix = outFilePrefix.str();
-        analysisParams.mpp = inpParams->mpp;
-        analysisParams.imgWidth = largestW;
-        analysisParams.imgHeight = largestH;
-        analysisParams.tileMinX = topLeftX;
-        analysisParams.tileMinY = topLeftY;
-        analysisParams.tileWidth = sizeX;
-        analysisParams.tileHeight = sizeY;
-        analysisParams.patchMinX = topLeftX;
-        analysisParams.patchMinY = topLeftY;
-        analysisParams.patchWidth = sizeX;
-        analysisParams.patchHeight = sizeY;
 
         cv::Mat thisTile;
 #pragma omp critical
@@ -622,9 +624,9 @@ int segmentImg(InputParameters *inpParams) {
     AnalysisParameters analysisParams;
     captureAnalysisParameters(&analysisParams, inpParams);
 
+    analysisParams.mpp = inpParams->mpp;
     analysisParams.imgWidth = (int64_t) thisTile.cols;
     analysisParams.imgHeight = (int64_t) thisTile.rows;
-    analysisParams.mpp = inpParams->mpp;
     analysisParams.tileMinX = inpParams->topLeftX;
     analysisParams.tileMinY = inpParams->topLeftY;
     analysisParams.tileWidth = analysisParams.imgWidth;

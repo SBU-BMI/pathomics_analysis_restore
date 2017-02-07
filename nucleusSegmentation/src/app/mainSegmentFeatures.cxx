@@ -612,7 +612,6 @@ int segmentWSI(InputParameters *inpParams) {
  * @return
  */
 int segmentImg(InputParameters *inpParams) {
-    const int ImageDimension = 2;
 
     AnalysisParameters analysisParams;
     captureAnalysisParameters(&analysisParams, inpParams);
@@ -1161,7 +1160,6 @@ int segmentSingleTile(InputParameters *inpParams) {
 #endif
 
 int main(int argc, char **argv) {
-    const int ImageDimension = 2;
     InputParameters inpParams;
 
     if (parseInputParameters(argc, argv, &inpParams) != 0) {

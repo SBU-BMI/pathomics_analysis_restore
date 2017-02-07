@@ -614,13 +614,13 @@ int segmentWSI(InputParameters *inpParams) {
  */
 int segmentImg(InputParameters *inpParams) {
 
-    AnalysisParameters analysisParams;
-    captureAnalysisParameters(&analysisParams, inpParams);
-
     // Read image using OpenCV.
     cv::Mat thisTile = imread(inpParams->inpFile.c_str());
     // Convert image to ITK image.
     itkRGBImageType::Pointer thisTileItk = itk::OpenCVImageBridge::CVMatToITKImage<itkRGBImageType>(thisTile);
+
+    AnalysisParameters analysisParams;
+    captureAnalysisParameters(&analysisParams, inpParams);
 
     analysisParams.imgWidth = (int64_t) thisTile.cols;
     analysisParams.imgHeight = (int64_t) thisTile.rows;

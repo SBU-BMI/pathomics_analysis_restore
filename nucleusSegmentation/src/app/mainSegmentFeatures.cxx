@@ -420,6 +420,7 @@ inline std::string getRandomIDString() {
  * @return
  */
 int segmentWSI(InputParameters *inpParams) {
+    // Read image using OpenSlide.
     openslide_t *osr = openslide_open(inpParams->inpFile.c_str());
     if (osr == NULL) return 1;
 

@@ -488,8 +488,8 @@ int segmentWSI(InputParameters *inpParams) {
                       << "." << inpParams->caseId
                       << "." << getRandomIDString()
                       << "_mpp_" << inpParams->mpp
-                      << "_x" << topLeftX
-                      << "_y" << topLeftY;
+                      << "_x" << analysisParams.tileMinX
+                      << "_y" << analysisParams.tileMinY;
         outPathPrefix << inpParams->outFolder
                       << "/"
                       << outFilePrefix.str();

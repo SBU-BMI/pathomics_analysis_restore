@@ -99,7 +99,8 @@ add_library(localLibraries
         lib/ConvertFunctions/ConvertRGBToLabel.cpp
         lib/ConvertFunctions/ConvertSlicerToLabel.cpp
         lib/ConvertFunctions/IsImageBinary.cpp
-        lib/ConvertFunctions/ReadUnknownImageType.cpp)
+        lib/ConvertFunctions/ReadUnknownImageType.cpp
+        lib/utilityFeaturesIO.cxx)
 
 set(Libraries
         localLibraries

@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     // Check the number of parameters
     if (argc < 5) {
         // Tell the user how to run the program
-        cerr << "Usage: " << argv[0] << "IMAGE MASK PGM OUTFILE [x y (optional)]" << endl;
+        cerr << "Usage: " << argv[0] << " IMAGE MASK ALG OUTFILE [x y (optional)]" << endl;
         cerr << "Note: mask should be labeled" << endl;
         exit(EXIT_FAILURE);
     }

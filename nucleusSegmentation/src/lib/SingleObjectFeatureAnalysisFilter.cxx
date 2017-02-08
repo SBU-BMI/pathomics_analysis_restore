@@ -135,13 +135,13 @@ namespace ImagenomicAnalytics
     m_objectFeatures.clear();
 
     //--------------------------------------------------------------------------------
-    // Morphology featrues
+    // Morphology features
     std::vector<FeatureValueType> morphologyFeatures = _computeMorphologyFeatures();
     m_objectFeatures.insert(m_objectFeatures.end(), morphologyFeatures.begin(), morphologyFeatures.end());
     //================================================================================
 
     //--------------------------------------------------------------------------------
-    // Color featrues
+    // Color features
     std::vector<FeatureValueType> colorFeatures = _computeColorFeatures();
     m_objectFeatures.insert(m_objectFeatures.end(), colorFeatures.begin(), colorFeatures.end());
     //================================================================================

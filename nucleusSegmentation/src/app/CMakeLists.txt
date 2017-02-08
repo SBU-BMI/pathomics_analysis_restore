@@ -66,7 +66,7 @@ if (build_mainSegmentFeatures OR build_computeFeatures)
         set(cexx computeFeatures)
         add_executable(${cexx} ${cexx}.cxx)
         target_link_libraries(${cexx} segment featuresAll ${Libraries})
-        add_dependencies(mainSegmentFeatures nscale-proj)
+        add_dependencies(computeFeatures nscale-proj)
     endif (build_computeFeatures)
 
 endif (build_mainSegmentFeatures OR build_computeFeatures)

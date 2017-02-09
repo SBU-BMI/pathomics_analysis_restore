@@ -9,4 +9,4 @@ RUN git clone -b subbranch_of_nscale_int https://github.com/SBU-BMI/pathomics_an
 	cmake ../src && \
 	make -j4 && \
 	cp app/main* /usr/local/bin/. && \
-    cp ../script/mainAggregateFeatures.py  /usr/local/bin/.
+        cp ../script/mainAggregateFeatures.py  /usr/local/bin/.

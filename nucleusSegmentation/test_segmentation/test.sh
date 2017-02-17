@@ -1,6 +1,7 @@
 #!/bin/bash
 
-docker_name="$USER-test_segmentation"
+#docker_name="$USER-test_segmentation"
+docker_name="test_segmentation"
 exec_id="20170126105652"
 input_file="TCGA-CS-4938-01Z-00-DX1_12560_47520_500_500_LGG.png"
 output_file="$HOME/test_out.zip"

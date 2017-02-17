@@ -1,9 +1,8 @@
 #!/bin/bash
 
-#docker_image="sbubmi/test_segmentation"
+docker_image="sbubmi/test_segmentation"
 #docker_name="$USER-test_segmentation"
-docker_image="sbubmi/quip-jobs"
-docker_name="quip-jobs"
+docker_name="test_segmentation"
 
 # Build image from dockerfile
 docker build -t $docker_image .

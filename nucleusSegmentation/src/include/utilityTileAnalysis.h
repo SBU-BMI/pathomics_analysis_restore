@@ -20,6 +20,10 @@
 #include "itkTriangleThresholdImageFilter.h"
 #include "itkYenThresholdImageFilter.h"
 
+#include "itkConnectedComponentImageFilter.h"
+#include "itkLabelImageToShapeLabelMapFilter.h"
+#include "itkRelabelComponentImageFilter.h"
+
 #include "Normalization.h"
 #include "BinaryMaskAnalysisFilter.h"
 #include "SFLSLocalChanVeseSegmentor2D.h"
@@ -448,6 +452,29 @@ namespace ImagenomicAnalytics {
                     nucleusBinaryMaskBufferPointer[it] = phiBufferPointer[it] <= 1.0 ? 1 : 0;
                 }
             }
+
+
+            typedef itk::ConnectedComponentImageFilter <itkBinaryMaskImageType, itkLabelImageType > ConnectedComponentImageFilterType;
+            ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New ();
+            connected->SetInput(nucleusBinaryMask);
+            connected->Update();
+
+            typedef itk::RelabelComponentImageFilter<itkLabelImageType, itkLabelImageType> FilterType;
+            FilterType::Pointer relabelFilter = FilterType::New();
+            relabelFilter->SetInput(connected->GetOutput());
+            relabelFilter->SetMinimumObjectSize(static_cast<FilterType::ObjectSizeType>(sizeThld/mpp/mpp));
+            relabelFilter->Update();
+
+            itkLabelImageType::Pointer tmpImg = relabelFilter->GetOutput();
+
+            itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+            itkLabelImageType::PixelType *tmpImgBufferPointer = tmpImg->GetBufferPointer();
+
+            for (long it = 0; it < nucleusBinaryMask->GetLargestPossibleRegion().GetNumberOfPixels(); ++it)
+              {
+                nucleusBinaryMaskBufferPointer[it] = tmpImgBufferPointer[it] > 0 ? 1 : 0;
+              }
+
 
             if (doDeclump) {
                 if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {

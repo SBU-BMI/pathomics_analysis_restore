@@ -453,6 +453,11 @@ namespace ImagenomicAnalytics {
                 }
             }
 
+            typedef itk::BinaryFillholeImageFilter< itkBinaryMaskImageType > fhFilterType;
+            fhFilterType::Pointer fhfilter = fhFilterType::New();
+            fhfilter->SetInput( nucleusBinaryMask );
+            fhfilter->SetForegroundValue( 1 );
+            fhfilter->Update();
 
             typedef itk::ConnectedComponentImageFilter <itkBinaryMaskImageType, itkLabelImageType > ConnectedComponentImageFilterType;
             ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New ();

@@ -1,3 +1,3 @@
 # pathomics_analysis
 
-Production version
+Joint pathological and genetics analysis

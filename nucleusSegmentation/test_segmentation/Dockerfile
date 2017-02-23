@@ -10,6 +10,3 @@ RUN git clone https://github.com/SBU-BMI/pathomics_analysis.git && \
 	make -j4 && \
 	cp app/main* /usr/local/bin/. && \
         cp ../script/mainAggregateFeatures.py  /usr/local/bin/.
-# Don't delete
-	#cp ../script/mainAggregateFeatures.py  /usr/local/bin/. && \
-	#cd /tmp && rm -rf pathomics_analysis*
